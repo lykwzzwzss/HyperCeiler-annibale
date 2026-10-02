@@ -113,3 +113,20 @@ jobs:
           name: ${{ env.APK_FILE_NAME }}
           path: ${{ env.APK_FILE }}
           compression-level: 9
+
+  native_host_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run host native tests
+        shell: bash
+        run: bash tests/run_host_native_tests.sh
+
+      - name: Upload test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-native-test-logs
+          path: /tmp/nativehook-host-tests/*.log
+          if-no-files-found: ignore

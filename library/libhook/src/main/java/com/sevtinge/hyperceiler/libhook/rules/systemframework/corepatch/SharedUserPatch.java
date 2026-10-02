@@ -4,6 +4,8 @@ import static com.sevtinge.hyperceiler.libhook.base.BaseHook.deoptimizeMethods;
 import static com.sevtinge.hyperceiler.libhook.base.BaseHook.findClassIfExists;
 
 import android.content.pm.ApplicationInfo;
+import android.os.Build;
+import android.util.Log;
 
 import com.sevtinge.hyperceiler.common.log.XposedLog;
 import com.sevtinge.hyperceiler.libhook.base.PackageTarget;
@@ -51,7 +53,11 @@ public class SharedUserPatch extends CorePatchHelper {
                     );
                     XposedLog.d(TAG, "system", "hooked restrictNonpreloadsSystemShareduids -> false");
                 } catch (Throwable e) {
-                    XposedLog.w(TAG, "system", "hook restrictNonpreloadsSystemShareduids failed: " + e);
+                    String message = "hook restrictNonpreloadsSystemShareduids failed";
+                    if (e instanceof IllegalAccessException && Build.VERSION.SDK_INT >= 37) {
+                        message += ": Android 17 / targetSdk 37 ART restriction";
+                    }
+                    XposedLog.w(TAG, "system", message + ": " + Log.getStackTraceString(e));
                 }
 
                 // 兜底：若 ReconcilePackageUtils 已被提前加载（<clinit> 已执行、常量已定死），

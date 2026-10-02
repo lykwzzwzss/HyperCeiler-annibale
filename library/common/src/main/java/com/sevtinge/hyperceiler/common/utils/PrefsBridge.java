@@ -180,11 +180,11 @@ public class PrefsBridge {
             AndroidLog.w(TAG, "Remote prefs not bound yet; " + rKey
                 + " saved locally only. It will sync to hook processes when the service binds."
                 + " Until then hook processes may read stale values.");
-            return;
+        } else {
+            commitPut(mRemotePrefs, rKey, value, "remote");
         }
-        if (!commitPut(mRemotePrefs, rKey, value, "remote")) {
-            return;
-        }
+        // The provider reads the committed physical file. A missing/read-only remote endpoint
+        // must not hide a successful local write from system_server's provider observers.
         notifyPrefChanged(rKey, prefType);
     }
 
@@ -205,11 +205,8 @@ public class PrefsBridge {
         if (!commitRemove(mPhysicalPrefs, rKey, "physical")) {
             return;
         }
-        if (mRemotePrefs == null) {
-            return;
-        }
-        if (!commitRemove(mRemotePrefs, rKey, "remote")) {
-            return;
+        if (mRemotePrefs != null) {
+            commitRemove(mRemotePrefs, rKey, "remote");
         }
         notifyPrefChanged(rKey, prefType);
     }

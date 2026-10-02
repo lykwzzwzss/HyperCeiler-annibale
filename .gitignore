@@ -17,3 +17,9 @@ signing.properties
 /.kotlin
 /library/hook
 .reasonix
+*.apk
+/handover/
+/.workbuddy/
+decompiled
+scope-apks
+.rivet*
