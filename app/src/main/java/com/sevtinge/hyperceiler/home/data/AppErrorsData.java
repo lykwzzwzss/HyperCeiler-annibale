@@ -50,8 +50,8 @@ public class AppErrorsData implements Parcelable {
     }
 
     protected AppErrorsData(Parcel in) {
-        crashInfo = in.readParcelable(AppCrashInfo.class.getClassLoader());
-        processInfo = in.readParcelable(ProcessInfo.class.getClassLoader());
+        crashInfo = in.readParcelable(AppCrashInfo.class.getClassLoader(), AppCrashInfo.class);
+        processInfo = in.readParcelable(ProcessInfo.class.getClassLoader(), ProcessInfo.class);
         handleAppCrashInActivity = in.readByte() != 0;
     }
 

@@ -43,7 +43,7 @@ public class CustomOrderViewHolder extends RecyclerView.ViewHolder {
     public final void setBackground(View view) {
         if (view != null) {
             int bgResId = HyperMaterialUtils.isFeatureEnable(view.getContext()) && RomUtils.getHyperOsVersion() >= 2 ? R.drawable.item_card_bg_blur : R.drawable.item_card_bg;
-            view.setBackground(view.getContext().getResources().getDrawable(bgResId));
+            view.setBackground(view.getContext().getResources().getDrawable(bgResId, view.getContext().getTheme()));
         }
     }
 }

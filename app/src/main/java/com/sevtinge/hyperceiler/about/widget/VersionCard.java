@@ -50,6 +50,7 @@ import java.security.SecureRandom;
 import java.util.Random;
 
 import fan.cardview.HyperCardView;
+import fan.core.utils.HyperMaterialUtils;
 import fan.core.utils.MiuiBlurUtils;
 import fan.device.DeviceUtils;
 import fan.internal.utils.ViewUtils;
@@ -435,13 +436,13 @@ public class VersionCard extends FrameLayout implements View.OnClickListener {
         int logoView = isAprilFoolsThemeView ? R.drawable.ic_hyperceiler_logo_sp : R.drawable.ic_hyperceiler_logo;
         int textView = isAprilFoolsThemeView ? R.drawable.ic_text_logo_sp : R.drawable.ic_text_logo;
         int textViewLite = isAprilFoolsThemeView ? R.drawable.ic_text_logo_lite_sp : R.drawable.ic_text_logo_lite;
-        if (!DeviceUtils.isMiuiLiteRom() && MiuiBlurUtils.isEnable() && MiuiBlurUtils.isEffectEnable(getContext())) {
+        if (!DeviceUtils.isMiuiLiteRom() && HyperMaterialUtils.isEnable() && MiuiBlurUtils.isEffectEnable(getContext())) {
             MiuiBlurUtils.setBackgroundBlur(mRootView, (int) ((getResources().getDisplayMetrics().density * 50.0f) + 0.5f));
             MiuiBlurUtils.setViewBlurMode(mRootView, 0);
             int[] logoColors = {
-                getResources().getColor(R.color.app_about_logo_color1),
-                getResources().getColor(R.color.app_about_logo_color2),
-                getResources().getColor(R.color.app_about_logo_color3)
+                getResources().getColor(R.color.app_about_logo_color1, getContext().getTheme()),
+                getResources().getColor(R.color.app_about_logo_color2, getContext().getTheme()),
+                getResources().getColor(R.color.app_about_logo_color3, getContext().getTheme())
             };
             if (ViewUtils.isNightMode(getContext().getApplicationContext())) {
                 mModeValue = 18;

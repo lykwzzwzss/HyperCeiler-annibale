@@ -303,7 +303,7 @@ public class StickyFloatingWindows extends BaseHook {
                 String action = intent.getAction();
                 if ((ACTION_PREFIX + "updateFwApps").equals(action)) {
                     float scale = intent.getFloatExtra("scale", 0f);
-                    Rect rect = intent.getParcelableExtra("rect");
+                    Rect rect = intent.getParcelableExtra("rect", Rect.class);
                     if (!fwApps.containsKey(pkgName)) {
                         fwApps.put(pkgName, new Pair<>(scale, rect));
                         storeFwAppsInSetting(receiverContext);

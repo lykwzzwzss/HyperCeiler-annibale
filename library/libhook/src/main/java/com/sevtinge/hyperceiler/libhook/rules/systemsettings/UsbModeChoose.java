@@ -175,7 +175,7 @@ public class UsbModeChoose extends BaseHook {
     public void setLanguage(Activity activity) {
         resources = activity.getResources();
         configuration = resources.getConfiguration();
-        locale = configuration.locale;
+        locale = configuration.getLocales().get(0);
         configuration.setLocale(Locale.SIMPLIFIED_CHINESE);
         resources.updateConfiguration(configuration, null);
     }

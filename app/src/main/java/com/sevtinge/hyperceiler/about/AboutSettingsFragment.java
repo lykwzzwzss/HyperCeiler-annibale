@@ -426,9 +426,9 @@ public class AboutSettingsFragment extends BasePreferenceFragment
             return;
         }
         mViewInitPadding = new ViewUtils.RelativePadding(
-            ViewCompat.getPaddingStart(mRootView),
+            mRootView.getPaddingStart(),
             mRootView.getPaddingTop(),
-            ViewCompat.getPaddingEnd(mRootView),
+            mRootView.getPaddingEnd(),
             mRootView.getPaddingBottom()
         );
         setContentViewPadding();

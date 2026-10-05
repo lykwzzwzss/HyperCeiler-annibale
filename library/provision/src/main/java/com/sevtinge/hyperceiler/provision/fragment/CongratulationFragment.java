@@ -45,6 +45,7 @@ import fan.animation.base.AnimConfig;
 import fan.animation.controller.AnimState;
 import fan.animation.listener.TransitionListener;
 import fan.animation.property.ViewProperty;
+import fan.core.utils.HyperMaterialUtils;
 import fan.core.utils.MiuiBlurUtils;
 import fan.internal.utils.LiteUtils;
 import fan.provision.OobeUtils;
@@ -142,7 +143,7 @@ public class CongratulationFragment extends BaseFragment implements IOnFocusList
     }
 
     private void setupBlurBackground() {
-        if (MiuiBlurUtils.isEnable() && !LiteUtils.isCommonLiteStrategy() &&
+        if (HyperMaterialUtils.isEnable() && !LiteUtils.isCommonLiteStrategy() &&
             MiuiBlurUtils.isEffectEnable(requireContext())) {
             MiuiBlurUtils.setBackgroundBlur(mContentView, (int) ((getResources().getDisplayMetrics().density * 50.0f) + 0.5f));
             MiuiBlurUtils.setViewBlurMode(mContentView, 0);
