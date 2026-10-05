@@ -155,7 +155,7 @@ const AIBinder_Class *window_class() {
  * are the minority.
  */
 constexpr char kCacheMagic[4] = {'H', 'C', 'L', 'C'};
-constexpr uint32_t kCacheVersion = 5;
+constexpr uint32_t kCacheVersion = 6;
 constexpr const char *kCachePath = "/data/user/0/com.miui.home/files/layout_config_cache.bin";
 constexpr const char *kCacheTmpPath = "/data/user/0/com.miui.home/files/layout_config_cache.bin.tmp";
 
@@ -172,6 +172,7 @@ void serialize_config(const Config &config, std::vector<uint8_t> &out) {
     put_u32(config.grid_enabled ? 1 : 0);
     put_u32(static_cast<uint32_t>(config.cell_x));
     put_u32(static_cast<uint32_t>(config.cell_y));
+    put_u32(config.title_blank ? 1 : 0);
     for (const auto &knob : config.knobs) {
         put_u32(knob.enabled ? 1 : 0);
         put_u32(static_cast<uint32_t>(knob.delta_dp));
@@ -200,7 +201,7 @@ bool parse_config(const std::vector<uint8_t> &data, Config &config) {
     if (std::memcmp(data.data(), kCacheMagic, 4) != 0) return false;
     uint32_t version = 0;
     std::memcpy(&version, data.data() + 4, 4);
-    if (version != 4 && version != kCacheVersion) return false;
+    if (version != 4 && version != 5 && version != kCacheVersion) return false;
     size_t at = 8;
     auto get_u32 = [&]() -> std::optional<uint32_t> {
         if (at + 4 > data.size()) return std::nullopt;
@@ -216,6 +217,11 @@ bool parse_config(const std::vector<uint8_t> &data, Config &config) {
     config.grid_enabled = *grid != 0;
     config.cell_x = static_cast<int>(*cx);
     config.cell_y = static_cast<int>(*cy);
+    // v4/v5 snapshots predate the drawer-title switch; a missing field must read as off, never as
+    // "the user asked for it" - a stale cache would otherwise blank a title nobody enabled.
+    const auto title = version >= 6 ? get_u32() : std::optional<uint32_t>{0};
+    if (!title || *title > 1) return false;
+    config.title_blank = *title != 0;
     for (auto &knob : config.knobs) {
         const auto enabled = get_u32();
         const auto delta = get_u32();
@@ -349,6 +355,23 @@ static bool query_binder(Config &result) {
         }
     }
     if (valid && AParcel_readInt32(output, &tweaks[16]) != STATUS_OK) tweaks[16] = 0;
+    /*
+     * The drawer-title switch is appended after every pre-existing field on purpose. The endpoint
+     * lives in system_server and the reader lives in the launcher: those two processes are
+     * injected independently, so an older system_server can be serving a newer launcher (measured:
+     * a system_server 23 hours older than the installed APK). Appending makes that mix benign —
+     * an old endpoint simply ends the parcel here, and only this one switch falls back to off.
+     * Inserting it mid-protocol instead shifted every following field, which the reader rejected
+     * as a whole (`valid=0`), taking the dock and layout features down with it.
+     */
+    int32_t title_blank = 0;
+    if (valid) {
+        if (AParcel_readInt32(output, &title_blank) != STATUS_OK) {
+            title_blank = 0;
+        } else if (title_blank != 0 && title_blank != 1) {
+            valid = false;
+        }
+    }
     const auto flag = [](int32_t value) { return value == 0 || value == 1; };
     const auto within = [](int32_t value, int32_t lo, int32_t hi) {
         return value >= lo && value <= hi;
@@ -375,6 +398,7 @@ static bool query_binder(Config &result) {
     candidate.grid_enabled = grid_enabled != 0;
     candidate.cell_x = x;
     candidate.cell_y = y;
+    candidate.title_blank = title_blank != 0;
     candidate.tweaks = TweaksConfig{
         tweaks[1] != 0, tweaks[0],
         tweaks[4] != 0, tweaks[2], tweaks[3],

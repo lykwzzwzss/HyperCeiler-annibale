@@ -124,6 +124,10 @@ object NativeHomeHooksOS4 {
                 val dockStatus = syncDockEnabled()
                 stage("dock switch status=${hex(dockStatus)} enabled=${prefBoolean(DOCK_ENABLED_KEY)}")
                 watchDockEnabled()
+                // The drawer-title switch is not pushed from here. It rides the layout snapshot
+                // that the endpoint in system_server answers (see home_title_targets.h): this
+                // process's Java rule is not guaranteed to be dispatched, so a push from here
+                // would make the feature depend on the very thing that fails.
             } catch (t: Throwable) {
                 failure = t
                 stage("configure failed detail=${t.javaClass.simpleName}: ${describe(t)}")

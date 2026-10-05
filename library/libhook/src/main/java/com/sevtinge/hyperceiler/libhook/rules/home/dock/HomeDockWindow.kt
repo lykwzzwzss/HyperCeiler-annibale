@@ -617,6 +617,11 @@ class HomeDockWindow : BaseHook() {
                         for (index in 0 until HomeLayoutNativeEndpointOS4.TWEAK_COUNT) {
                             reply.writeInt(if (index < tweaks.size) tweaks[index] else 0)
                         }
+                        // Appended after every pre-existing field: this endpoint runs in
+                        // system_server and the reader in the launcher, and the two processes are
+                        // injected independently, so a stale server must not shift the fields an
+                        // up-to-date reader expects. An old reader just ignores the trailing value.
+                        reply.writeInt(result?.titleBlank() ?: 0)
                     } else {
                         val acknowledgment = nativeMotionReply.get() ?: DockNativeMotionEndpoint.ACK
                         nativeMotionReply.remove()

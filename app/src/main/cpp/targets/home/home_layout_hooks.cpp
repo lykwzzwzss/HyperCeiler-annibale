@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 #include "home_layout_config.h"
 #include "home_layout_knobs.h"
+#include "home_title_targets.h"
 #include "home_workspace_geometry.h"
 #include "home_folder_geometry.h"
 #include "home_indicator_pair.h"
@@ -2620,6 +2621,15 @@ void prime_home_layout_knobs(HookFunction hook, UnhookFunction unhook) {
             g_knobs[index].delta_dp.store(config.knobs[index].delta_dp,
                 std::memory_order_relaxed);
         }
+        /*
+         * The drawer-title switch rides this snapshot instead of the module's JNI entry point.
+         * That entry point only exists inside the launcher process's injected Java rule, which is
+         * not guaranteed to run (measured: the launcher never reports the `configure` stage while
+         * the Dock keeps working); this snapshot arrives over the launcher's own authenticated
+         * transaction from system_server, so it is reachable whenever the layout features are.
+         * Pushing it here also means the first frame already reflects the user's choice.
+         */
+        home_title::ApplySwitch(config.title_blank);
     }
     std::vector<size_t> order; // worker adopts these same registered slots after publication
     const size_t added = arm_hooks(order);

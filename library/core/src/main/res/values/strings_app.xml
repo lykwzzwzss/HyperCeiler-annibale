@@ -1312,6 +1312,8 @@
     <string name="home_drawer_blur_desc">Please set App drawer background transparency to 100% to use this feature</string>
     <string name="home_drawer_pinyin">Arrange in Pinyin order</string>
     <string name="home_drawer_pinyin_more">When the language isn\'t Simplified Chinese, the apps in the drawer will still arrange according to Pinyin.</string>
+    <string name="home_drawer_hide_all_apps_title">Hide the drawer\'s \"All apps\" title</string>
+    <string name="home_drawer_hide_all_apps_title_more">Removes the \"All apps\" text at the top of the app drawer. HyperOS 4 Flutter launcher only.</string>
     <string name="home_title">Icon and title</string>
     <string name="home_title_icon_title">Icon</string>
     <string name="home_title_icon_animation_title">Icon animation</string>

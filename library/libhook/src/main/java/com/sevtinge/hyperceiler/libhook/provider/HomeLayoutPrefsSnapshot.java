@@ -47,6 +47,7 @@ public final class HomeLayoutPrefsSnapshot {
         {"integer", "home_animation_open_rate"},
         {"boolean", "home_animation_recents_enable"},
         {"integer", "home_animation_recents_rate"},
+        {"boolean", "home_drawer_hide_all_apps_title"},
     };
     private HomeLayoutPrefsSnapshot() {}
     public static String[][] specs() {

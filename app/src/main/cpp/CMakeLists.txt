@@ -15,6 +15,7 @@ add_library(HyperCeilerNative SHARED targets/home/hyperceiler_home.cpp)
 enable_language(ASM)
 
 target_sources(HyperCeilerNative PRIVATE targets/home/home_layout_targets.cpp)
+target_sources(HyperCeilerNative PRIVATE targets/home/home_title_targets.cpp)
 target_sources(HyperCeilerNative PRIVATE targets/home/home_layout_config.cpp
     targets/home/home_layout_hooks.cpp
     targets/home/home_layout_dart_arm64.S)

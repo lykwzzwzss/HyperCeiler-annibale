@@ -66,6 +66,19 @@ struct Config {
     int cell_x = 0;
     int cell_y = 0;
     /*
+     * Blank the launcher drawer title ("全部应用" / "All apps").
+     *
+     * Carried on this snapshot rather than pushed through the module's JNI entry point: the
+     * launcher-process Java rule that would do the pushing is not always injected (measured: the
+     * module's `site=configure` stage never fires on com.miui.home while the Dock keeps working),
+     * so a JNI-only switch silently leaves the feature dead. This endpoint lives in system_server
+     * and answers the launcher's own transaction, which is exactly the path the Dock already uses.
+     *
+     * Default off, and off is authoritative: a snapshot that omits the key must not blank a title
+     * the user never asked to remove.
+     */
+    bool title_blank = false;
+    /*
      * One row per HC_LAYOUT_KNOBS entry, in that order. Deltas are in PIXELS:
      * the settings pages store dp and system_server owns the default display's
      * density, so the launcher-side trampolines never need a density of their own.

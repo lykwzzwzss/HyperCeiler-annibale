@@ -197,7 +197,7 @@ public final class HomeLayoutNativeEndpointOS4 {
     }
 
     public record Snapshot(int acknowledgment, int gridEnabled, int cellX, int cellY,
-        int[] knobEnabled, int[] knobDeltaDp, int[] tweaks) { }
+        int titleBlank, int[] knobEnabled, int[] knobDeltaDp, int[] tweaks) { }
 
     @FunctionalInterface
     interface CallerVerifier {
@@ -238,6 +238,7 @@ public final class HomeLayoutNativeEndpointOS4 {
             if (read == null || (read.gridEnabled() != 0 && read.gridEnabled() != 1)
                     || read.cellX() < 3 || read.cellX() > 9
                     || read.cellY() < 4 || read.cellY() > 13
+                    || (read.titleBlank() != 0 && read.titleBlank() != 1)
                     || read.knobEnabled().length != KNOB_ROWS.length
                     || read.knobDeltaDp().length != KNOB_ROWS.length
                     || read.tweaks().length != TWEAK_COUNT) {
@@ -256,7 +257,8 @@ public final class HomeLayoutNativeEndpointOS4 {
                     return denied("tweak " + index + " value=" + value);
                 }
             }
-            final Snapshot accepted = new Snapshot(ACK, read.gridEnabled(), read.cellX(), read.cellY(),
+            final Snapshot accepted = new Snapshot(ACK, read.gridEnabled(), read.cellX(),
+                read.cellY(), read.titleBlank(),
                 read.knobEnabled(), read.knobDeltaDp(), read.tweaks());
             final String summary = describe(accepted);
             if (!summary.equals(lastAccepted)) {
@@ -275,14 +277,15 @@ public final class HomeLayoutNativeEndpointOS4 {
             lastDenied = why;
             android.util.Log.w(TAG, "layout endpoint denied: " + why);
         }
-        return new Snapshot(ACK, 0, 0, 0, new int[KNOB_ROWS.length], new int[KNOB_ROWS.length],
+        return new Snapshot(ACK, 0, 0, 0, 0, new int[KNOB_ROWS.length], new int[KNOB_ROWS.length],
             new int[TWEAK_COUNT]);
     }
 
     private static String describe(Snapshot snapshot) {
         if (snapshot == null) return "null";
         final StringBuilder text = new StringBuilder("grid=").append(snapshot.gridEnabled())
-            .append(" cell=").append(snapshot.cellX()).append('x').append(snapshot.cellY());
+            .append(" cell=").append(snapshot.cellX()).append('x').append(snapshot.cellY())
+            .append(" titleBlank=").append(snapshot.titleBlank());
         if (snapshot.knobEnabled() != null && snapshot.knobDeltaDp() != null) {
             text.append(" knobs=[");
             for (int index = 0; index < snapshot.knobEnabled().length
@@ -367,7 +370,9 @@ public final class HomeLayoutNativeEndpointOS4 {
         tweaks[14] = readBoolean(values, "home_animation_recents_enable", false) ? 1 : 0;
         tweaks[15] = Math.max(30, Math.min(200, readInt(values, "home_animation_recents_rate", 100)));
         tweaks[16] = readBoolean(values, "home_dock_unlock_hotseat", false) ? 1 : 0;
-        return new Snapshot(ACK, gridEnabled ? 1 : 0, cellX, cellY, enabled, deltas, tweaks);
+        final boolean titleBlank = readBoolean(values, "home_drawer_hide_all_apps_title", false);
+        return new Snapshot(ACK, gridEnabled ? 1 : 0, cellX, cellY, titleBlank ? 1 : 0,
+            enabled, deltas, tweaks);
     }
 
     /** Number of code-patch feature values, in the order the native side reads them. */

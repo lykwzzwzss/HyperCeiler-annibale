@@ -30,6 +30,8 @@ void HomeTweaksOnLibraryLoaded(const char *name);
 void HomeTweaksPrepareForLauncherChild();
 }
 
+#include "home_title_targets.h"
+
 #ifdef HYPERCEILER_DOCK_NATIVE_MOTION
 void start_dock_native_motion(int (*hook)(void *, void *, void **), int (*unhook)(void *));
 void set_dock_motion_feature_enabled(bool enabled);
@@ -254,6 +256,10 @@ void on_library_loaded(const char *name, void *) {
         prime_home_layout_probe(g_hook_function, g_unhook_function);
         prime_home_layout_knobs(g_hook_function, g_unhook_function);
         hometweaks::HomeTweaksOnLibraryLoaded(name);
+        // Drawer title blanking needs the image mapped and nothing else; it shares this callback
+        // rather than adding a second library-load probe. A no-op until the layout snapshot turns
+        // the switch on, so wiring it here costs a single atomic load when the feature is off.
+        home_title::InstallIfNeeded();
     }
     const std::string_view library_name(name);
     if ((launcher || is_hyos_spawner_process())
@@ -338,7 +344,20 @@ Java_com_sevtinge_hyperceiler_libhook_rules_home_other_NativeHomeHooksOS4_native
 
 extern "C" [[gnu::visibility("default")]] [[gnu::used]]
 NativeOnModuleLoaded native_init(const NativeApiEntries *entries) {
-    if (entries == nullptr || entries->hook_func == nullptr) return nullptr;
+    // Log before the guard: a silent early return here is indistinguishable from the framework
+    // never calling native_init at all, and that ambiguity cost a full debugging round. The
+    // entries pointer and its hook_func are the two conditions that decide whether any of this
+    // target's work can run, so they are exactly what has to be visible.
+    __android_log_print(ANDROID_LOG_INFO, kLogTag,
+        "native_init called entries=%p hook=%p unhook=%p", static_cast<const void *>(entries),
+        entries == nullptr ? nullptr : reinterpret_cast<void *>(entries->hook_func),
+        entries == nullptr ? nullptr : reinterpret_cast<void *>(entries->unhook_func));
+    if (entries == nullptr || entries->hook_func == nullptr) {
+        __android_log_print(ANDROID_LOG_WARN, kLogTag,
+            "native_init aborting: hook API unavailable (entries=%p)",
+            static_cast<const void *>(entries));
+        return nullptr;
+    }
     const bool spawner = is_hyos_spawner_process();
     __android_log_print(ANDROID_LOG_INFO, kLogTag,
         "native v34 hook API version=%u unhook=%d hyosSpawner=%d launcher=%d",
@@ -357,6 +376,10 @@ NativeOnModuleLoaded native_init(const NativeApiEntries *entries) {
         hometweaks::HomeTweaksPrepareForLauncherChild();
         hometweaks::StartHomeTweaks();
     }
+    // Drawer title blanking is driven by the layout snapshot the endpoint in system_server answers
+    // (see home_title_targets.h / ApplySwitch): it starts only once that snapshot says the user
+    // enabled it, so the launcher is never modified by default and the feature does not depend on
+    // this process's Java rule being injected.
     if (spawner) install_process_name_hook();
 #ifdef HYPERCEILER_DOCK_NATIVE_MOTION
     // In the normal path the spawner does not contain libapp.so. Starting here
