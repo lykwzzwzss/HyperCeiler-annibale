@@ -277,7 +277,12 @@ public class AppLanguageHelper {
             return builder.build();
         } catch (Throwable t) {
             AndroidLog.w(TAG, "buildLocale fallback for " + language + "_" + country + ": " + t.getMessage());
-            return TextUtils.isEmpty(country) ? new Locale(language) : new Locale(language, country);
+            // Locale.of(language, "") 与已过时的 new Locale(language) 逐字段等价（含非法 language
+            // 的原样保留），且自 API 33 起可用（本模块 minSdk 35）。不要换成 forLanguageTag：
+            // 它会把 "zh-Hant" 拆成 script、把 "a1" 丢弃，语义与这里的降级路径不一致。
+            return TextUtils.isEmpty(country)
+                ? Locale.of(language, "")
+                : Locale.of(language, country);
         }
     }
 

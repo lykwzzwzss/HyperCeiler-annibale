@@ -650,7 +650,7 @@ public class HomePageFragment extends BasePreferenceFragment implements OnComple
 
     public boolean isChina(Context context) {
         Locale locale = context.getResources().getConfiguration().getLocales().get(0);
-        return locale.getLanguage().contains(new Locale("zh").getLanguage());
+        return locale.getLanguage().contains(Locale.CHINESE.getLanguage());
     }
 
     @Override
