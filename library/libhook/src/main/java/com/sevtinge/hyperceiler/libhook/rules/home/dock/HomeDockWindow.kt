@@ -30,7 +30,6 @@ import android.os.IBinder
 import android.os.Parcel
 import android.os.PowerManager
 import android.os.SystemClock
-import android.provider.Settings
 import android.view.Display
 import android.view.Surface
 import android.view.SurfaceControl
@@ -55,7 +54,11 @@ import java.util.concurrent.atomic.AtomicLong
  * using the existing system scope and remote preferences. No injected input window is necessary.
  */
 class HomeDockWindow : BaseHook() {
-    private companion object {
+    /**
+     * Shared constants. `internal` rather than `private` because [DockWindowModels]'s `Layer`
+     * carries [NO_SCENE] as a default and Kotlin's top-level `private` is file-scoped.
+     */
+    internal companion object {
         const val LOG_TAG = "system"
         const val METHOD_CLOSE = "close"
         const val METHOD_RELEASE = "release"
@@ -126,159 +129,9 @@ class HomeDockWindow : BaseHook() {
         const val SCENE_LOG_MIN_GAP_MS = 150L
     }
 
-    /**
-     * Sample-by-time console for a record whose interesting events are transitions.
-     *
-     * <p>Lives outside the companion because it carries mutable state; a plain object with an
-     * `@Volatile` stamp is enough for the frame loop, which is single-threaded under the layer lock.
-     */
-    private object SCENE_LOG {
-        @Volatile private var lastAtMs = 0L
 
-        /** @return true when this event should be recorded, and arms the window when it should. */
-        fun sample(): Boolean {
-            val now = SystemClock.uptimeMillis()
-            if (now - lastAtMs < SCENE_LOG_MIN_GAP_MS) return false
-            lastAtMs = now
-            return true
-        }
-    }
-    private object Surfaces {
-        fun buildLayer(name: String, parent: Any, color: Boolean): Any {
-            val builder = loadClass("android.view.SurfaceControl\$Builder").getConstructor().newInstance()
-            builder.callMethod("setName", name)
-            builder.callMethod("setParent", parent)
-            builder.callMethod("setHidden", true)
-            builder.callMethod(if (color) "setColorLayer" else "setEffectLayer")
-            return builder.callMethod("build")!!
-        }
 
-        fun destroySurface(surface: Any) {
-            val transaction = loadClass(TRANSACTION).getConstructor().newInstance()
-            try {
-                if (surface.callMethod(IS_VALID) == true) {
-                    transaction.callMethod("remove", surface)
-                    transaction.callMethod("apply")
-                }
-            } finally {
-                try { transaction.callMethod(METHOD_CLOSE) } finally { surface.callMethod(METHOD_RELEASE) }
-            }
-        }
 
-    }
-
-    private data class Settings(
-        val enabled: Boolean, val mode: Int, val color: Int, val height: Int,
-        val margin: Int, val bottom: Int, val radius: Int, val nightMode: Int,
-        val revealStyle: DockUnlockReveal.Style
-    ) {
-        companion object {
-            fun read() = Settings(
-                PrefsBridge.getBoolean("home_dock_bg_custom_enable"),
-                DockWindowPolicy.normalizeBackgroundMode(PrefsBridge.getStringAsInt("home_dock_add_blur", 1)),
-                PrefsBridge.getInt("home_dock_bg_color", 0),
-                PrefsBridge.getInt("home_dock_bg_height", 150),
-                PrefsBridge.getInt("home_dock_bg_margin_horizontal", 25),
-                PrefsBridge.getInt("home_dock_bg_margin_bottom", 15),
-                PrefsBridge.getInt("home_dock_bg_radius", 30),
-                PrefsBridge.getStringAsInt("home_other_home_mode", 0),
-                DockUnlockReveal.Style.of(PrefsBridge.getString("home_dock_unlock_style", "daybreak"))
-            )
-        }
-        val blur get() = mode == 1 || mode == DockGlassPreset.MODE
-        val glass get() = mode == DockGlassPreset.MODE
-    }
-
-    private data class Appearance(val config: Settings, val bounds: DockWindowPolicy.Bounds,
-        val dark: Boolean, val visible: Boolean, val glass: DockGlassClient.Ticket?) {
-        val surface = glass?.lease
-        // A capture frozen with the drawable freeze still composites its last home frame, so the
-        // panel stays native glass. Only the vendor's undraw fallback has no visible source and
-        // needs the compositor fallback to carry it. Readiness is part of the key, so this flip
-        // re-runs applyAppearance.
-        val ready = glass?.ready == true && !glass.dead && surface != null && !glass.captureUndrawn
-        val key = "$config/$bounds/$dark/$visible/$surface/$ready/${glass?.dead}/" +
-            "${glass?.capturePaused}/${glass?.captureUndrawn}"
-    }
-
-    private data class Layer(val parent: Any, val effect: Any, val tint: Any,
-        var appearance: String = "", var glass: DockGlassClient.Ticket? = null,
-        var glassRotationEpoch: Int = 0,
-        val motion: DockRecentsMotion = DockRecentsMotion(),
-        val nativeMotion: DockNativeMotion = DockNativeMotion(),
-        var nativeUid: Int = -1, var nativePid: Int = -1,
-        var nativeApplied: Boolean = false, var overview: Boolean = false,
-        /**
-         * Last scene this layer reacted to, or [NO_SCENE] when there is none.
-         *
-         * <p>Deliberately *not* the same thing as "not initialised". Every place that used to
-         * write `-1` here is a place that either dropped the identity or lost the sample, and
-         * writing the same sentinel from the frame loop's invisible branch made the value flip
-         * between `-1` and a real scene on alternating frames - one `native motion scene=` record
-         * per flip. Clearing the identity clears this along with it, so the sentinel keeps its
-         * intended meaning: no sample has been accepted for this layout.
-         */
-        var nativeScene: Int = NO_SCENE,
-        var overviewGeneration: Long = 0, var nativeOverviewGeneration: Long = 0,
-        var lastOverviewValidationNs: Long = 0,
-        var lastVisible: Boolean? = null,
-        /** True while the launcher's overlay (minus-one screen) is what keeps this layer hidden. */
-        var overlayHidden: Boolean = false,
-        var lastGlassReady: Boolean? = null,
-        var motionSession: Any? = null, var motionClient: IBinder? = null,
-        var motionSamples: Int = 0, var motionEndPending: Boolean = false,
-        var baseY: Int = 0, var density: Float = 0f, var motionTime: Long = 0,
-        var nativeSampleDeadlineNs: Long = 0,
-        var autoAimSequence: Long = 0, var autoAimDeadlineNs: Long = 0,
-        var autoAimLive: Boolean = false, var autoAimSamples: Int = 0,
-        var x: Float = Float.NaN, var y: Float = Float.NaN,
-        /** Launcher frame size, the coordinate space [x]/[baseY] live in. Drives the AUTO_AIM pivot. */
-        var parentWidth: Int = 0, var parentHeight: Int = 0,
-        val reveal: DockUnlockReveal = DockUnlockReveal(),
-        var width: Int = 0, var height: Int = 0, var radius: Float = 0f,
-        var revealScaleX: Float = 1f, var revealScaleY: Float = 1f,
-        var revealCropWidth: Float = 1f, var revealCropHeight: Float = 1f,
-        var revealCornerProgress: Float = 1f,
-        var revealAlpha: Float = 1f, var revealSlide: Float = 0f,
-        /** When the current glass host died, so its replacement is rate limited. */
-        var glassDroppedAt: Long = 0L) {
-        /** Drop every cached native identity/sample after the launcher Session changed. */
-        fun resetNativeMotion() {
-            nativeMotion.reset()
-            nativeApplied = false
-            nativeScene = NO_SCENE
-            nativeSampleDeadlineNs = 0
-            motionSamples = 0
-            motionEndPending = false
-            nativeUid = -1
-            nativePid = -1
-            resetAutoAim()
-        }
-
-        /**
-         * Drop everything that authenticates a native sample, keeping the layout state.
-         *
-         * <p>This is the half of [resetNativeMotion] that a layer which merely stopped being
-         * visible needs: the sample it was following is gone, so the next accepted one must not be
-         * compared against a scene from the previous session - but the window is still the same
-         * window, so re-resolving its Session on every hidden frame would be pure churn.
-         */
-        fun clearNativeSample() {
-            nativeMotion.reset()
-            nativeApplied = false
-            nativeScene = NO_SCENE
-            nativeSampleDeadlineNs = 0
-            resetAutoAim()
-        }
-
-        /** Drop the live unlock footprint without disturbing the independent recents state. */
-        fun resetAutoAim() {
-            autoAimSequence = 0
-            autoAimDeadlineNs = 0
-            autoAimLive = false
-            autoAimSamples = 0
-        }
-    }
     private val layers = IdentityHashMap<Any, Layer>()
     // Protected by layers; do not retain retired launcher windows when the dock is disabled.
     private var revealStyleWindow = WeakReference<Any>(null)
@@ -335,11 +188,6 @@ class HomeDockWindow : BaseHook() {
     private val nativeMotionReply = ThreadLocal<Int>()
     private val layoutEndpoint = HomeLayoutNativeEndpointOS4()
     private val layoutReply = ThreadLocal<HomeLayoutNativeEndpointOS4.Snapshot>()
-    private data class ScheduledFrame(val epoch: Long, val tick: Runnable)
-    /** One background transform for one frame. The pose is identity unless the reveal is live. */
-    private data class FrameUpdate(val layer: Layer, val y: Float,
-        val pose: DockUnlockReveal.ContainerPose, val alpha: Float, val slide: Float,
-        var appliedScaleX: Float = 1f, var appliedScaleY: Float = 1f)
     private val frameEpoch = AtomicLong(0)
     private val scheduledFrameEpoch = AtomicLong(0)
     private val scheduledFrameStartedNs = AtomicLong(0)
@@ -1486,7 +1334,6 @@ class HomeDockWindow : BaseHook() {
      * to the caller. A ROM without the Rect crop overload falls back to folding the crop fraction
      * into the matrix; layout is never requested from an animation frame.
      */
-    private data class AppliedContainer(val scaleX: Float, val scaleY: Float)
 
     private fun applyRevealContainer(transaction: Any, layer: Layer,
         pose: DockUnlockReveal.ContainerPose, force: Boolean = false): AppliedContainer {
