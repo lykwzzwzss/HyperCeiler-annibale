@@ -18,12 +18,11 @@
 */
 package com.sevtinge.hyperceiler.libhook.rules.systemui.lockscreen;
 
-import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.isMoreAndroidVersion;
-
 import android.content.res.Resources;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.sevtinge.hyperceiler.common.log.XposedLog;
 import com.sevtinge.hyperceiler.libhook.base.BaseHook;
 import io.github.lingqiqi5211.ezhooktool.xposed.java.IMethodHook;
 
@@ -39,11 +38,21 @@ public class ScramblePIN extends BaseHook {
 
     @Override
     public void init() {
-        if (isMoreAndroidVersion(36)) {
-            // thanks xzakota
-            mKeyguardPINView = findClassIfExists("com.android.keyguard.widget.MiuiKeyguardPINView");
-        } else {
+        /*
+         * The class has to be resolved before the hook is installed, and a missing class used to
+         * take the whole package down with it: findClassIfExists answers null, findAndHookMethod
+         * then dereferences it, and the resulting NullPointerException aborted the remaining
+         * modules of this process (the control-center tile hooks never registered because they sit
+         * after this one). Probing every candidate and bailing out with a plain "not found" keeps a
+         * renamed keyguard class from costing the user every other SystemUI feature.
+         */
+        mKeyguardPINView = findClassIfExists("com.android.keyguard.widget.MiuiKeyguardPINView");
+        if (mKeyguardPINView == null) {
             mKeyguardPINView = findClassIfExists("com.android.keyguard.KeyguardPINView");
+        }
+        if (mKeyguardPINView == null) {
+            XposedLog.w(TAG, "ScramblePIN: KeyguardPINView not found, skipping");
+            return;
         }
 
         findAndHookMethod(mKeyguardPINView, "onFinishInflate", new IMethodHook() {
