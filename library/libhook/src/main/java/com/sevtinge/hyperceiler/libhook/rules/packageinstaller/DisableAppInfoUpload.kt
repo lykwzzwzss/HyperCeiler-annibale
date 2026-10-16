@@ -39,7 +39,7 @@ object DisableAppInfoUpload : BaseHook() {
         /**
          * methods invoke api '/avl/upload/'
          */
-        avlUploadInvokerList = requiredMemberList("avlUploadInvokerList") {
+        avlUploadInvokerList = optionalMemberList("avlUploadInvokersV2") {
             it.findMethod {
                 matcher {
                     paramCount(4)
@@ -58,7 +58,7 @@ object DisableAppInfoUpload : BaseHook() {
         /**
          * methods invoke api '/v4/game/interceptcheck/'
          */
-        interceptCheckInvokerList = requiredMemberList("interceptCheckInvokerList") {
+        interceptCheckInvokerList = optionalMemberList("interceptCheckInvokersV2") {
             it.findMethod {
                 matcher {
                     paramCount(6)
@@ -78,8 +78,12 @@ object DisableAppInfoUpload : BaseHook() {
         /**
          * methods invoke api '/info/layout'
          */
-        infoLayoutInvokerList = requiredMemberList("infoLayoutInvokerList") {
-            it.findMethod {
+        infoLayoutInvokerList = optionalMemberList<Method>("infoLayoutInvokersV2") {
+            // The seven-argument prototype is also used by a Runnable constructor.
+            // Restrict to the layout helper and remove constructors BEFORE cache resolution.
+            it.findClass {
+                matcher { usingStrings("NewAdDataHelper") }
+            }.findMethod {
                 matcher {
                     paramCount(7)
                     paramTypes(
@@ -92,9 +96,10 @@ object DisableAppInfoUpload : BaseHook() {
                         null
                     )
                 }
-            }
-        }
-        return true
+            }.apply { removeIf { member -> member.name.startsWith("<") } }
+        }.filter { it.returnType == Void.TYPE || it.returnType == Object::class.java }
+        return avlUploadInvokerList.isNotEmpty() || interceptCheckInvokerList.isNotEmpty()
+            || infoLayoutInvokerList.isNotEmpty()
     }
 
     override fun init() {
@@ -111,7 +116,7 @@ object DisableAppInfoUpload : BaseHook() {
 
         avlUploadInvokerList.forEach {
             it.createHook {
-                replace { }
+                returnConstant(null)
             }
         }
     }
@@ -131,11 +136,7 @@ object DisableAppInfoUpload : BaseHook() {
 
         infoLayoutInvokerList.forEach { method ->
             method.createHook {
-                if (method.returnType == Object::class.java) {
-                    returnConstant(null)
-                } else {
-                    replace { }
-                }
+                returnConstant(null) // Both supported returns are void or nullable Object.
             }
         }
 
@@ -147,7 +148,7 @@ object DisableAppInfoUpload : BaseHook() {
         XposedLog.d(
             TAG, lpparam.packageName,
             "'${prefix}' find methods: " + list.stream().map {
-                "${it.javaClass.name}#${
+                "${it.declaringClass.name}#${
                     it.name
                 }"
             }.collect(Collectors.joining(" | "))

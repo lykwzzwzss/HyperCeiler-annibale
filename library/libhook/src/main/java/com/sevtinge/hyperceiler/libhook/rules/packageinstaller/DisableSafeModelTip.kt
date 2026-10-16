@@ -19,47 +19,56 @@
 package com.sevtinge.hyperceiler.libhook.rules.packageinstaller
 
 import com.sevtinge.hyperceiler.libhook.base.BaseHook
-import io.github.lingqiqi5211.ezhooktool.xposed.dsl.setBooleanField
-import io.github.lingqiqi5211.ezhooktool.core.findMethod
-import io.github.lingqiqi5211.ezhooktool.xposed.dsl.createAfterHook
-import io.github.lingqiqi5211.ezhooktool.xposed.dsl.createHook
-import java.lang.reflect.Field
+import io.github.lingqiqi5211.ezhooktool.xposed.common.HookParam
+import io.github.lingqiqi5211.ezhooktool.xposed.java.IMethodHook
+import org.luckypray.dexkit.query.matchers.base.AccessFlagsMatcher
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 
 object DisableSafeModelTip : BaseHook() {
     override fun useDexKit() = true
-    private lateinit var disableSafeModelTipMethod: Method
-    private lateinit var recyclerViewField: Field
+    private lateinit var personalizedAdGetter: Method
+    private lateinit var visibilityGetter: Method
+    private lateinit var tipClass: Class<*>
 
     override fun initDexKit(): Boolean {
-        disableSafeModelTipMethod = requiredMember("DisableSafeModelTip") {
+        // Several methods now mention MiuiSettings$Ad. Select only its boolean getter,
+        // not setters or unrelated reflection bridges.
+        personalizedAdGetter = requiredMember("PersonalizedAdGetterV2") {
             it.findMethod {
                 matcher {
-                    usingEqStrings($$"android.provider.MiuiSettings$Ad")
+                    usingEqStrings($$"android.provider.MiuiSettings$Ad", "isPersonalizedAdEnabled")
+                    paramCount = 0
+                    returnType = "boolean"
                 }
-            }.singleOrNull()
+            }.single()
         }
-        recyclerViewField = requiredMember("RecyclerView") {
+        tipClass = findClass("com.miui.packageInstaller.ui.listcomponets.SafeModeTipViewObject")
+        visibilityGetter = requiredMember("TipVisibilityGetterV2") {
             it.findClass {
+                matcher { className = tipClass.superclass!!.name }
+            }.findMethod {
                 matcher {
-                    className = "com.miui.packageInstaller.ui.listcomponets.SafeModeTipViewObject"
+                    paramCount = 0
+                    returnType = "boolean"
+                    modifiers(AccessFlagsMatcher.create(Modifier.PUBLIC))
+                    addUsingField { type = "boolean" }
                 }
-            }.single().superClass?.findField {
-                matcher {
-                    type = "boolean"
-                }
-            }?.single()
+            }.single()
         }
         return true
     }
 
     override fun init() {
-        disableSafeModelTipMethod.createHook {
-            replace { false }
-        }
-
-        recyclerViewField.declaringClass.findMethod { name("a") }.createAfterHook {
-            it.thisObject.setBooleanField(recyclerViewField.name, false)
-        }
+        hookMethod(personalizedAdGetter, object : IMethodHook {
+            override fun before(param: HookParam) { param.result = false }
+        })
+        // The shared base now owns multiple boolean fields. Override its visibility
+        // getter for this tip only; never change every installer row's state.
+        hookMethod(visibilityGetter, object : IMethodHook {
+            override fun before(param: HookParam) {
+                if (tipClass.isInstance(param.thisObject)) param.result = false
+            }
+        })
     }
 }

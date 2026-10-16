@@ -68,7 +68,7 @@ object LockOneHundredPoints : BaseHook() {
     }
 
     private val score3 by lazy<Method> {
-        requiredMember("LockOneHundredPointsField") {
+        requiredMember("LockOneHundredPointsFieldV2") {
             it.findClass {
                 matcher {
                     className = "com.miui.securityscan.scanner.ScoreManager"
@@ -84,13 +84,15 @@ object LockOneHundredPoints : BaseHook() {
                         }
                         returnType = "int"
                     }
+                    paramCount = 0
+                    returnType = "boolean"
                 }
             }.single()
         }
     }
 
     private val addRiskApp by lazy<Method> {
-        requiredMember("AddRiskApp") {
+        requiredMember("AddRiskAppV2") {
             it.findClass {
                 matcher {
                     className = "com.miui.securityscan.scanner.ScoreManager"
@@ -98,6 +100,7 @@ object LockOneHundredPoints : BaseHook() {
             }.findMethod {
                 matcher {
                     addInvoke("Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z")
+                    addInvoke("Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")
                     paramCount = 1
                     returnType = "void"
                 }
@@ -128,4 +131,3 @@ object LockOneHundredPoints : BaseHook() {
         }
     }
 }
-
