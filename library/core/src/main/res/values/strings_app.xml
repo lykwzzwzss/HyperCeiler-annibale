@@ -1080,6 +1080,8 @@
     <string name="theme_manager_diable_ads_desc">Replace \"guess what you like\" ads with blank cards, and remove the rest of the ads completely.</string>
     <string name="theme_manager_allow_download_more">Allow more downloads without logging in</string>
     <string name="theme_manager_allow_download_more_desc">Allow downloading more than 10 items without logging in</string>
+    <string name="theme_manager_ringtone_use_file_browser">Browse ringtones by folder</string>
+    <string name="theme_manager_ringtone_use_file_browser_desc">Replace the flat all-in-one \"Local music\" list with the file manager\'s folder browser when picking a local ringtone</string>
     <!--remotecontroller-->
     <string name="remotecontroller">Mi Remote</string>
     <string name="remotecontroller_disable_ad">Disable ads</string>
