@@ -188,6 +188,13 @@ class HomeDockWindow : BaseHook() {
     internal val nativeMotionReply = ThreadLocal<Int>()
     internal val layoutEndpoint = HomeLayoutNativeEndpointOS4()
     internal val layoutReply = ThreadLocal<HomeLayoutNativeEndpointOS4.Snapshot>()
+    internal val combinedReply = ThreadLocal<HomeLayoutNativeEndpointOS4.CombinedSnapshot>()
+    internal val hyosReply = ThreadLocal<Int>()
+    private data class ScheduledFrame(val epoch: Long, val tick: Runnable)
+    /** One background transform for one frame. The pose is identity unless the reveal is live. */
+    private data class FrameUpdate(val layer: Layer, val y: Float,
+        val pose: DockUnlockReveal.ContainerPose, val alpha: Float, val slide: Float,
+        var appliedScaleX: Float = 1f, var appliedScaleY: Float = 1f)
     private val frameEpoch = AtomicLong(0)
     private val scheduledFrameEpoch = AtomicLong(0)
     private val scheduledFrameStartedNs = AtomicLong(0)

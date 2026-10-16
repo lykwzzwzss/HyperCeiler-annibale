@@ -56,12 +56,24 @@ internal class DockWindowHooks(
                     if (owner.stopped) return@createBeforeHook
                     val code = param.args[0] as Int
                     val layout = code == HomeLayoutNativeEndpointOS4.TRANSACTION_CODE
-                    if (!layout && !DockNativeMotionEndpoint.handles(code)) return@createBeforeHook
+                    val hyos = code == HomeLayoutNativeEndpointOS4.HYOS_TRANSACTION_CODE
+                    val combined = code == HomeLayoutNativeEndpointOS4.COMBINED_TRANSACTION_CODE
+                    if (!layout && !hyos && !combined
+                        && !DockNativeMotionEndpoint.handles(code)) return@createBeforeHook
                     val data = param.args[1] as Parcel
                     val position = data.dataPosition()
-                    if (layout) owner.layoutReply.remove() else owner.nativeMotionReply.remove()
+                    if (layout) owner.layoutReply.remove()
+                    else if (hyos) owner.hyosReply.remove()
+                    else if (combined) owner.combinedReply.remove()
+                    else owner.nativeMotionReply.remove()
                     runCatching {
-                        if (layout) {
+                        if (combined) {
+                            owner.combinedReply.set(
+                                owner.layoutEndpoint.receiveCombinedSnapshot(data, param.args[3] as Int))
+                        } else if (hyos) {
+                            owner.hyosReply.set(
+                                owner.layoutEndpoint.receiveHyosFlags(data, param.args[3] as Int))
+                        } else if (layout) {
                             owner.layoutReply.set(owner.layoutEndpoint.receive(data, param.args[3] as Int))
                         } else {
                             owner.nativeMotionReply.set(owner.nativeMotionEndpoint.receive(
@@ -80,14 +92,27 @@ internal class DockWindowHooks(
             transact.createAfterHook { param ->
                 val code = param.args[0] as Int
                 val layout = code == HomeLayoutNativeEndpointOS4.TRANSACTION_CODE
+                val hyos = code == HomeLayoutNativeEndpointOS4.HYOS_TRANSACTION_CODE
+                val combined = code == HomeLayoutNativeEndpointOS4.COMBINED_TRANSACTION_CODE
                 val state = code == DockNativeMotionEndpoint.STATE_TRANSACTION_CODE
                 if (owner.stopped
-                    || (!layout && !state && !DockNativeMotionEndpoint.handles(code))) {
+                    || (!layout && !hyos && !combined && !state
+                        && !DockNativeMotionEndpoint.handles(code))) {
                     return@createAfterHook
                 }
                 val reply = param.args[2] as? Parcel ?: return@createAfterHook
                 reply.setDataPosition(0)
-                if (state) {
+                if (combined) {
+                    val result = owner.combinedReply.get()
+                    owner.combinedReply.remove()
+                    HomeLayoutNativeEndpointOS4.writeCombinedReply(reply, result)
+                } else if (hyos) {
+                    val flags = owner.hyosReply.get() ?: -1
+                    owner.hyosReply.remove()
+                    reply.writeInt(HomeLayoutNativeEndpointOS4.HYOS_ACK)
+                    reply.writeInt(if (flags >= 0) 1 else 0)
+                    reply.writeInt(if (flags >= 0) flags else 0)
+                } else if (state) {
                     // Answered here, not pushed: system_server is the only side that knows
                     // whether the panel is interactive and its own WindowState is visible.
                     // The launcher-native side has no reverse channel to be told. The body is
@@ -127,6 +152,7 @@ internal class DockWindowHooks(
                 }
                 param.result = true
             }
+            HomeLayoutNativeEndpointOS4.startCombinedPrefetch()
             owner.glassClient.record("native motion IWindowManager endpoint ready")
         }.onFailure {
             owner.glassClient.record("native motion IWindowManager endpoint unavailable=${it.javaClass.simpleName}")
