@@ -1037,8 +1037,11 @@
     <string name="theme_manager_diable_ads_desc">将 \"猜你喜欢\" 的广告替换为空白卡片，其余位置的广告将完全移除</string>
     <string name="theme_manager_allow_download_more">允许在未登录的情况下下载更多内容</string>
     <string name="theme_manager_allow_download_more_desc">允许在未登录的情况下下载超过 10 个内容</string>
-    <string name="theme_manager_ringtone_use_file_browser">按文件夹浏览铃声</string>
-    <string name="theme_manager_ringtone_use_file_browser_desc">选取本地铃声时，把「本地音乐」的全库扁平列表换成文件管理器的文件夹浏览</string>
+    <string name="theme_manager_ringtone_picker">铃声选择器</string>
+    <string name="theme_manager_ringtone_picker_desc">选择「本地音乐」用哪个界面浏览。系统文件选择器需要已安装 com.google.android.documentsui。</string>
+    <string name="theme_manager_ringtone_picker_off">关闭</string>
+    <string name="theme_manager_ringtone_picker_file_browser">文件管理器</string>
+    <string name="theme_manager_ringtone_picker_documents_ui">系统文件选择器</string>
     <!--万能遥控-->
     <string name="remotecontroller">万能遥控</string>
     <string name="remotecontroller_disable_ad">禁用推广</string>

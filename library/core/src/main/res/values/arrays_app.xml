@@ -895,6 +895,18 @@
         <item>150</item>
     </string-array>
 
+    <string-array name="theme_manager_ringtone_picker_mode">
+        <item>@string/theme_manager_ringtone_picker_off</item>
+        <item>@string/theme_manager_ringtone_picker_file_browser</item>
+        <item>@string/theme_manager_ringtone_picker_documents_ui</item>
+    </string-array>
+
+    <string-array name="theme_manager_ringtone_picker_mode_value">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
     <string-array name="card_tile_list">
         <item>wifi</item>
         <item>cell</item>

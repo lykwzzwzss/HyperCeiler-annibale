@@ -38,11 +38,13 @@
             android:key="prefs_key_theme_manager_unlock_ai_wallpaper"
             android:defaultValue="false" />
 
-        <SwitchPreference
-            android:title="@string/theme_manager_ringtone_use_file_browser"
-            android:summary="@string/theme_manager_ringtone_use_file_browser_desc"
-            android:key="prefs_key_theme_manager_ringtone_use_file_browser"
-            android:defaultValue="false" />
+        <fan.preference.DropDownPreference
+            android:title="@string/theme_manager_ringtone_picker"
+            android:summary="@string/theme_manager_ringtone_picker_desc"
+            android:key="prefs_key_theme_manager_ringtone_picker_mode"
+            android:defaultValue="0"
+            app:entries="@array/theme_manager_ringtone_picker_mode"
+            app:entryValues="@array/theme_manager_ringtone_picker_mode_value" />
 
         <fan.preference.DropDownPreference
             android:key="prefs_key_theme_manager_new_version_code_modify"

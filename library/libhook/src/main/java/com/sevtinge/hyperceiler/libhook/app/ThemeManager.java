@@ -37,7 +37,7 @@ public class ThemeManager extends BaseLoad {
         initHook(new DisableThemeAdNew(), PrefsBridge.getBoolean("various_theme_disable_ads"));
         initHook(new AllowDownloadMore(), PrefsBridge.getBoolean("theme_manager_allow_download_more"));
         initHook(UnlockAIWallPaper.INSTANCE, PrefsBridge.getBoolean("theme_manager_unlock_ai_wallpaper"));
-        initHook(RingtonePickerUseFileBrowser.INSTANCE, PrefsBridge.getBoolean("theme_manager_ringtone_use_file_browser"));
+        initHook(RingtonePickerUseFileBrowser.INSTANCE, RingtonePickerUseFileBrowser.INSTANCE.isEnabled());
     }
 
 }
