@@ -67,6 +67,7 @@ import com.sevtinge.hyperceiler.libhook.rules.securitycenter.other.SimplifyMainF
 import com.sevtinge.hyperceiler.libhook.rules.securitycenter.other.SkipCountDownLimit;
 import com.sevtinge.hyperceiler.libhook.rules.securitycenter.sidebar.AddSideBarExpandReceiver;
 import com.sevtinge.hyperceiler.libhook.rules.securitycenter.sidebar.BlurSecurity;
+import com.sevtinge.hyperceiler.libhook.rules.securitycenter.sidebar.game.GameDockLightBackground;
 import com.sevtinge.hyperceiler.libhook.rules.securitycenter.sidebar.game.GamePerformanceWildMode;
 import com.sevtinge.hyperceiler.libhook.rules.securitycenter.sidebar.game.RemoveGameToast;
 import com.sevtinge.hyperceiler.libhook.rules.securitycenter.sidebar.game.RemoveMacroBlackList;
@@ -157,6 +158,7 @@ public class SecurityCenter extends BaseLoad {
         initHook(new VideoDolbyOpen(), PrefsBridge.getBoolean("security_center_dolby_open"));
         initHook(new VBVideoMode(), PrefsBridge.getBoolean("security_center_unlock_new_vb"));
         initHook(new GamePerformanceWildMode(), PrefsBridge.getBoolean("security_center_game_performance_wild_mode"));
+        initHook(GameDockLightBackground.INSTANCE, PrefsBridge.getBoolean("security_center_game_dock_light_background"));
 
         initHook(new PowerConsumptionRanking(), PrefsBridge.getBoolean("security_center_power_consumption_ranking"));
 
