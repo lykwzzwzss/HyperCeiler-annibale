@@ -26,6 +26,8 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
+import android.util.Log;
 import android.widget.Switch;
 
 import androidx.annotation.CallSuper;
@@ -37,6 +39,7 @@ import com.sevtinge.hyperceiler.libhook.R;
 import com.sevtinge.hyperceiler.libhook.base.BaseHook;
 import io.github.lingqiqi5211.ezhooktool.xposed.java.IMethodHook;
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.tool.AppsTool;
+import com.sevtinge.hyperceiler.libhook.utils.api.ContextUtils;
 
 import io.github.lingqiqi5211.ezhooktool.xposed.common.HookParam;
 import io.github.libxposed.api.XposedInterface;
@@ -93,6 +96,9 @@ public abstract class TileUtils extends BaseHook {
     private static final String FIELD_CUSTOM_NAME = "hc_customTileName";
     private static final String METHOD_CREATE_TILE = "createTile";
     private static final String HOT_RELOAD_STATE_PREFIX = "TileUtils.listening.";
+
+    /** 探针 tag：原始 Log 输出，绕过模块日志级别门控 */
+    private static final String TAG_RAW = "HyperCeiler.Tile";
 
     // ==================== 缓存字段 ====================
 
@@ -287,7 +293,65 @@ public abstract class TileUtils extends BaseHook {
             setObjectReplacement(packageName, "string", resName, stockTiles);setObjectReplacement("miui.systemui.plugin", "string", resName, stockTiles);
         }
 
+        // HyperOS 4 的「编辑与排序」不再读这两个资源串，替换无效；
+        // 需要磁贴真正出现的功能可要求直接写用户磁贴列表兜底。
+        if (mConfig.isAutoAddToPanel()) {
+            ensureTileInPanel(context, tileName);
+        }
+
         XposedLog.d(TAG, "Registered tile: " + tileName);
+    }
+
+    /**
+     * 把自定义磁贴追加到用户磁贴列表（sysui_qs_tiles）
+     *
+     * <p>只在面板里还没有该磁贴时写一次，并留下标记：用户之后手动移除不会被反复加回。</p>
+     */
+    @SuppressLint("DiscouragedApi")
+    private void ensureTileInPanel(Context context, String tileName) {
+        try {
+            String marker = "hyperceiler_tile_added_" + tileName;
+            if (Settings.System.getInt(context.getContentResolver(), marker, 0) == 1) return;
+
+            String current = Settings.Secure.getString(context.getContentResolver(), "sysui_qs_tiles");
+            Log.i(TAG_RAW, "panel sync: tile=" + tileName + ", current=" + current);
+            if (current == null) return;
+
+            for (String spec : current.split(",")) {
+                if (tileName.equals(spec.trim())) {
+                    Settings.System.putInt(context.getContentResolver(), marker, 1);
+                    return;
+                }
+            }
+
+            Settings.Secure.putString(context.getContentResolver(), "sysui_qs_tiles",
+                current + "," + tileName);
+            Settings.System.putInt(context.getContentResolver(), marker, 1);
+            Log.i(TAG_RAW, "tile appended to panel: " + tileName);
+            XposedLog.d(TAG, "Tile appended to panel: " + tileName);
+        } catch (Throwable t) {
+            Log.w(TAG_RAW, "append tile failed: " + t);
+            XposedLog.w(TAG, "Failed to append tile to panel: " + tileName + ", " + t);
+        }
+    }
+
+    /**
+     * 异步补一次面板（不依赖 SystemUIApplication.onCreate 的时序）
+     *
+     * <p>HyperOS 4 上 onCreate 回调可能晚于磁贴仓库初始化，甚至根本不触发；
+     * 需要磁贴一定出现的功能可以在 {@code init()} 里主动调一次。</p>
+     */
+    protected void ensureTileInPanelAsync() {
+        if (!mConfig.isCustomTile() || !mConfig.isAutoAddToPanel()) return;
+
+        String tileName = mConfig.getTileName();
+        ContextUtils.getWaitContext(ctx -> {
+            if (ctx == null) {
+                Log.w(TAG_RAW, "no context for tile panel sync: " + tileName);
+                return;
+            }
+            ensureTileInPanel(ctx, tileName);
+        }, false);
     }
 
     /**
