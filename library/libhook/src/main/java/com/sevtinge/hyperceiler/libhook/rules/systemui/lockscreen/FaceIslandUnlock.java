@@ -82,21 +82,21 @@ public class FaceIslandUnlock extends BaseHook {
         hookLargestConstructor(clazz, new IMethodHook() {
             @Override
             public void after(HookParam param) {
-                FaceIslandBridge.bindMonitor(param.thisObject);
+                FaceIslandBridge.bindMonitor(param.getThisObject());
             }
         });
         hook(clazz, "onFaceAuthenticated", 2, new IMethodHook() {
             @Override
             public void after(HookParam param) {
-                FaceIslandBridge.onFaceAccepted(param.thisObject,
-                    (Integer) param.args[0], (Boolean) param.args[1]);
+                FaceIslandBridge.onFaceAccepted(param.getThisObject(),
+                    (Integer) param.getArgs()[0], (Boolean) param.getArgs()[1]);
             }
         });
         hook(clazz, "onFingerprintAuthenticated", 2, new IMethodHook() {
             @Override
             public void after(HookParam param) {
-                FaceIslandBridge.onFingerprintProduced(param.thisObject,
-                    (Integer) param.args[0], (Boolean) param.args[1]);
+                FaceIslandBridge.onFingerprintProduced(param.getThisObject(),
+                    (Integer) param.getArgs()[0], (Boolean) param.getArgs()[1]);
             }
         });
     }
@@ -111,27 +111,27 @@ public class FaceIslandUnlock extends BaseHook {
             hookLargestConstructor(mediator, new IMethodHook() {
                 @Override
                 public void after(HookParam param) {
-                    FaceIslandBridge.bindMediator(param.thisObject);
+                    FaceIslandBridge.bindMediator(param.getThisObject());
                 }
             });
             hook(mediator, "handleHide", 0, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    FaceIslandBridge.onHide(param.thisObject);
+                    FaceIslandBridge.onHide(param.getThisObject());
                 }
             });
             hook(mediator, "handleCancelKeyguardExitAnimation", 0, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    FaceIslandBridge.onHideCancelled(param.thisObject);
+                    FaceIslandBridge.onHideCancelled(param.getThisObject());
                 }
             });
             hook(mediator, "handleKeyguardDone", 0, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
                     try {
-                        if (!getBooleanField(param.thisObject, "mGoingToSleep")) {
-                            FaceIslandBridge.onMediatorDone(param.thisObject);
+                        if (!getBooleanField(param.getThisObject(), "mGoingToSleep")) {
+                            FaceIslandBridge.onMediatorDone(param.getThisObject());
                         }
                     } catch (Throwable ignored) {
                     }
@@ -140,7 +140,7 @@ public class FaceIslandUnlock extends BaseHook {
             hook(mediator, "setShowingLocked", 3, new IMethodHook() {
                 @Override
                 public void after(HookParam param) {
-                    FaceIslandBridge.onKeyguardState(param.thisObject);
+                    FaceIslandBridge.onKeyguardState(param.getThisObject());
                 }
             });
         }
@@ -150,9 +150,9 @@ public class FaceIslandUnlock extends BaseHook {
             hook(callback, "keyguardDone", 1, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    Object owner = getObjectField(param.thisObject, "this$0");
+                    Object owner = getObjectField(param.getThisObject(), "this$0");
                     if (owner != null) {
-                        FaceIslandBridge.onDoneRequest(owner, (Integer) param.args[0]);
+                        FaceIslandBridge.onDoneRequest(owner, (Integer) param.getArgs()[0]);
                     }
                     Object token = peek(CREDENTIAL_FINISH);
                     if (token != null) {
@@ -179,7 +179,7 @@ public class FaceIslandUnlock extends BaseHook {
             hook(finished, "run", 0, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    Object token = FaceIslandBridge.enterExitCallback(param.thisObject);
+                    Object token = FaceIslandBridge.enterExitCallback(param.getThisObject());
                     push(EXIT_CALLBACK, token);
                 }
 
@@ -203,7 +203,7 @@ public class FaceIslandUnlock extends BaseHook {
         hook(service, "onStartedGoingToSleep", 1, new IMethodHook() {
             @Override
             public void after(HookParam param) {
-                Object mediator = mediatorOf(param.thisObject);
+                Object mediator = mediatorOf(param.getThisObject());
                 if (mediator != null) {
                     FaceIslandBridge.onSleepStarted(mediator);
                     FaceIslandBridge.onKeyguardState(mediator);
@@ -213,7 +213,7 @@ public class FaceIslandUnlock extends BaseHook {
         hook(service, "onFinishedGoingToSleep", 2, new IMethodHook() {
             @Override
             public void after(HookParam param) {
-                Object mediator = mediatorOf(param.thisObject);
+                Object mediator = mediatorOf(param.getThisObject());
                 if (mediator != null) {
                     FaceIslandBridge.onSleepFinished(mediator);
                 }
@@ -222,7 +222,7 @@ public class FaceIslandUnlock extends BaseHook {
         hook(service, "onStartedWakingUp", 2, new IMethodHook() {
             @Override
             public void after(HookParam param) {
-                Object mediator = mediatorOf(param.thisObject);
+                Object mediator = mediatorOf(param.getThisObject());
                 if (mediator != null) {
                     FaceIslandBridge.onWakeStarted(mediator);
                     FaceIslandBridge.onKeyguardState(mediator);
@@ -248,15 +248,15 @@ public class FaceIslandUnlock extends BaseHook {
                 @Override
                 public void before(HookParam param) {
                     Object token = FaceIslandBridge.enterFingerprintPolicy(
-                        param.thisObject, (Integer) param.args[0],
-                        param.args[1], (Boolean) param.args[2]);
+                        param.getThisObject(), (Integer) param.getArgs()[0],
+                        param.getArgs()[1], (Boolean) param.getArgs()[2]);
                     push(FINGERPRINT_POLICY, token);
                 }
 
                 @Override
                 public void after(HookParam param) {
                     FaceIslandBridge.leaveFingerprintPolicy(
-                        pop(FINGERPRINT_POLICY), param.thisObject);
+                        pop(FINGERPRINT_POLICY), param.getThisObject());
                 }
             });
         }
@@ -267,7 +267,7 @@ public class FaceIslandUnlock extends BaseHook {
             hook(controller, "startWakeAndUnlock", 2, new IMethodHook() {
                 @Override
                 public void after(HookParam param) {
-                    FaceIslandBridge.onFingerprintUnlockBranch(param.thisObject);
+                    FaceIslandBridge.onFingerprintUnlockBranch(param.getThisObject());
                 }
             });
         }
@@ -284,20 +284,20 @@ public class FaceIslandUnlock extends BaseHook {
             hookLargestConstructor(repo, new IMethodHook() {
                 @Override
                 public void after(HookParam param) {
-                    FaceIslandBridge.bindRepository(param.thisObject);
+                    FaceIslandBridge.bindRepository(param.getThisObject());
                 }
             });
             hook(repo, "cancel", 0, new IMethodHook() {
                 @Override
                 public void after(HookParam param) {
-                    FaceIslandBridge.onDetectionChanged(param.thisObject);
-                    FaceIslandBridge.onAuthStopped(param.thisObject);
+                    FaceIslandBridge.onDetectionChanged(param.getThisObject());
+                    FaceIslandBridge.onAuthStopped(param.getThisObject());
                 }
             });
             hook(repo, "access$onFaceAuthRequestCompleted", 1, new IMethodHook() {
                 @Override
                 public void after(HookParam param) {
-                    FaceIslandBridge.onAuthStopped(param.args[0]);
+                    FaceIslandBridge.onAuthStopped(param.getArgs()[0]);
                 }
             });
         }
@@ -308,7 +308,7 @@ public class FaceIslandUnlock extends BaseHook {
             hook(detect, "invokeSuspend", 1, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    Object owner = getObjectField(param.thisObject, "this$0");
+                    Object owner = getObjectField(param.getThisObject(), "this$0");
                     if (owner != null) {
                         FaceIslandBridge.onDetectionChanged(owner);
                     }
@@ -322,7 +322,7 @@ public class FaceIslandUnlock extends BaseHook {
             hook(detection, "onFaceDetected", 3, new IMethodHook() {
                 @Override
                 public void after(HookParam param) {
-                    Object owner = getObjectField(param.thisObject, "this$0");
+                    Object owner = getObjectField(param.getThisObject(), "this$0");
                     if (owner != null) {
                         FaceIslandBridge.onDetectionChanged(owner);
                     }
@@ -336,7 +336,7 @@ public class FaceIslandUnlock extends BaseHook {
             hook(faceCallback, "onAuthenticationSucceeded", 1, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    FaceIslandBridge.onFaceProduced(param.args[0]);
+                    FaceIslandBridge.onFaceProduced(param.getArgs()[0]);
                 }
             });
         }
@@ -347,7 +347,7 @@ public class FaceIslandUnlock extends BaseHook {
             hook(acceptance, "invokeSuspend", 1, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    Object status = getObjectField(param.thisObject, "L$0");
+                    Object status = getObjectField(param.getThisObject(), "L$0");
                     push(FACE_ACCEPT, FaceIslandBridge.enterFaceAcceptance(status));
                 }
 
@@ -363,16 +363,16 @@ public class FaceIslandUnlock extends BaseHook {
             hook(faceManager, "authenticate", 6, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    Object callback = param.args[3];
+                    Object callback = param.getArgs()[3];
                     if (callback == null
                         || !callback.getClass().getName().endsWith("$faceAuthCallback$1")
                         || callback.getClass().getName().contains("faceisland")) {
                         return;
                     }
-                    int user = (Integer) param.args[5];
+                    int user = (Integer) param.getArgs()[5];
                     Object wrapped = FaceIslandBridge.wrapFaceCallback(callback, user);
                     if (wrapped != null) {
-                        param.args[3] = wrapped;
+                        param.getArgs()[3] = wrapped;
                     }
                 }
             });
@@ -389,11 +389,11 @@ public class FaceIslandUnlock extends BaseHook {
             hook(password, "onPasswordCheckedByMiui", 6, new IMethodHook() {
                 @Override
                 public void after(HookParam param) {
-                    int user = (Integer) param.args[0];
-                    if ((Boolean) param.args[1]) {
-                        FaceIslandBridge.onCredentialChecked(param.thisObject, user, 0);
+                    int user = (Integer) param.getArgs()[0];
+                    if ((Boolean) param.getArgs()[1]) {
+                        FaceIslandBridge.onCredentialChecked(param.getThisObject(), user, 0);
                     } else {
-                        FaceIslandBridge.onCredentialRejected(param.thisObject, user);
+                        FaceIslandBridge.onCredentialRejected(param.getThisObject(), user);
                     }
                 }
             });
@@ -407,9 +407,9 @@ public class FaceIslandUnlock extends BaseHook {
                     hookMethod(method, new IMethodHook() {
                         @Override
                         public void after(HookParam param) {
-                            Object controller = param.args[0];
-                            int user = (Integer) param.args[1];
-                            if ((Boolean) param.args[2]) {
+                            Object controller = param.getArgs()[0];
+                            int user = (Integer) param.getArgs()[1];
+                            if ((Boolean) param.getArgs()[2]) {
                                 FaceIslandBridge.onCredentialChecked(controller, user, 3);
                             } else {
                                 FaceIslandBridge.onCredentialRejected(controller, user);
@@ -427,9 +427,9 @@ public class FaceIslandUnlock extends BaseHook {
             hook(container, "finish", 1, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    Object owner = getObjectField(param.thisObject, "this$0");
+                    Object owner = getObjectField(param.getThisObject(), "this$0");
                     Object token = FaceIslandBridge.beginCredentialFinish(
-                        owner, (Integer) param.args[0]);
+                        owner, (Integer) param.getArgs()[0]);
                     push(CREDENTIAL_FINISH, token);
                 }
 
@@ -447,7 +447,7 @@ public class FaceIslandUnlock extends BaseHook {
                 @Override
                 public void before(HookParam param) {
                     Object token = peek(CREDENTIAL_FINISH);
-                    Object callback = param.args[0];
+                    Object callback = param.getArgs()[0];
                     if (token == null || callback == null) {
                         return;
                     }
@@ -469,8 +469,8 @@ public class FaceIslandUnlock extends BaseHook {
             hook(binder, "syncToFaceView", 0, new IMethodHook() {
                 @Override
                 public void after(HookParam param) {
-                    Object container = getObjectField(param.thisObject, "faceContainerView");
-                    Object face = getObjectField(param.thisObject, "faceView");
+                    Object container = getObjectField(param.getThisObject(), "faceContainerView");
+                    Object face = getObjectField(param.getThisObject(), "faceView");
                     if (container != null) {
                         FaceIslandBridge.hideNativeFaceIcon(container, face);
                     }
@@ -484,7 +484,7 @@ public class FaceIslandUnlock extends BaseHook {
             hook(faceView, "onFinishInflate", 0, new IMethodHook() {
                 @Override
                 public void after(HookParam param) {
-                    View view = (View) param.thisObject;
+                    View view = (View) param.getThisObject();
                     if (view.getId() == BOUNCER_FACE_VIEW_ID) {
                         FaceIslandBridge.hideNativeFaceIcon(view, view);
                     }
@@ -493,9 +493,9 @@ public class FaceIslandUnlock extends BaseHook {
             hook(faceView, "setVisibility", 1, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    View view = (View) param.thisObject;
-                    if (view.getId() == BOUNCER_FACE_VIEW_ID && ((Integer) param.args[0]) == 0) {
-                        param.args[0] = 4;
+                    View view = (View) param.getThisObject();
+                    if (view.getId() == BOUNCER_FACE_VIEW_ID && ((Integer) param.getArgs()[0]) == 0) {
+                        param.getArgs()[0] = 4;
                     }
                 }
             });
@@ -513,7 +513,7 @@ public class FaceIslandUnlock extends BaseHook {
             hookLargestConstructor(island, new IMethodHook() {
                 @Override
                 public void after(HookParam param) {
-                    FaceIslandBridge.bindIsland(param.thisObject);
+                    FaceIslandBridge.bindIsland(param.getThisObject());
                 }
             });
         }
@@ -524,7 +524,7 @@ public class FaceIslandUnlock extends BaseHook {
             hook(surfaces, "onDozingChanged", 1, new IMethodHook() {
                 @Override
                 public void after(HookParam param) {
-                    Object owner = getObjectField(param.thisObject, "this$0");
+                    Object owner = getObjectField(param.getThisObject(), "this$0");
                     Object mediator = owner != null
                         ? getObjectField(owner, "mKeyguardViewMediator") : null;
                     if (mediator != null) {

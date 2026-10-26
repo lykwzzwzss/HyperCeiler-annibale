@@ -51,8 +51,8 @@ public final class FaceIslandPluginHooks {
                 @Override
                 public void before(HookParam param) {
                     Object view = FaceIslandBridge.createTemplateView(
-                        (Context) param.args[0], param.args[1], param.args[3],
-                        (Boolean) param.args[4], false);
+                        (Context) param.getArgs()[0], param.getArgs()[1], param.getArgs()[3],
+                        (Boolean) param.getArgs()[4], false);
                     if (view != null) {
                         param.setResult(view);
                     }
@@ -62,8 +62,8 @@ public final class FaceIslandPluginHooks {
                 @Override
                 public void before(HookParam param) {
                     Object view = FaceIslandBridge.createTemplateView(
-                        (Context) param.args[0], param.args[1], param.args[3],
-                        (Boolean) param.args[4], true);
+                        (Context) param.getArgs()[0], param.getArgs()[1], param.getArgs()[3],
+                        (Boolean) param.getArgs()[4], true);
                     if (view != null) {
                         param.setResult(view);
                     }
@@ -72,7 +72,7 @@ public final class FaceIslandPluginHooks {
             hook(factory, "hideView", 2, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    if (FaceIslandBridge.setVisible(param.args[0], false, (Boolean) param.args[1])) {
+                    if (FaceIslandBridge.setVisible(param.getArgs()[0], false, (Boolean) param.getArgs()[1])) {
                         param.setResult(null);
                     }
                 }
@@ -80,7 +80,7 @@ public final class FaceIslandPluginHooks {
             hook(factory, "showView", 2, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    if (FaceIslandBridge.setVisible(param.args[0], true, (Boolean) param.args[1])) {
+                    if (FaceIslandBridge.setVisible(param.getArgs()[0], true, (Boolean) param.getArgs()[1])) {
                         param.setResult(null);
                     }
                 }
@@ -88,7 +88,7 @@ public final class FaceIslandPluginHooks {
             hook(factory, "removeTemplate", 1, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    if (FaceIslandBridge.remove((String) param.args[0])) {
+                    if (FaceIslandBridge.remove((String) param.getArgs()[0])) {
                         param.setResult(null);
                     }
                 }
@@ -102,7 +102,7 @@ public final class FaceIslandPluginHooks {
             hook(window, "setCancelTimeout", 2, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    if (FaceIslandBridge.isManaged(param.args[0])) {
+                    if (FaceIslandBridge.isManaged(param.getArgs()[0])) {
                         param.setResult(null);
                     }
                 }
@@ -110,7 +110,7 @@ public final class FaceIslandPluginHooks {
             hook(window, "getIslandTemplate", 1, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    Object template = FaceIslandBridge.createTemplate(param.args[0], param.thisObject);
+                    Object template = FaceIslandBridge.createTemplate(param.getArgs()[0], param.getThisObject());
                     if (template != null) {
                         param.setResult(template);
                     }
@@ -119,7 +119,7 @@ public final class FaceIslandPluginHooks {
             hook(window, "removeDynamicIslandView", 2, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    FaceIslandBridge.notifyRemoved((String) param.args[0], "PLUGIN_REMOVE");
+                    FaceIslandBridge.notifyRemoved((String) param.getArgs()[0], "PLUGIN_REMOVE");
                 }
             });
 
@@ -128,7 +128,7 @@ public final class FaceIslandPluginHooks {
             hook(content, "onIslandClick", 0, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    if (FaceIslandBridge.onIslandClick(param.thisObject)) {
+                    if (FaceIslandBridge.onIslandClick(param.getThisObject())) {
                         param.setResult(null);
                     }
                 }
@@ -145,7 +145,7 @@ public final class FaceIslandPluginHooks {
             @Override
             public void before(HookParam param) {
                 if (FaceIslandBridge.updateWidth(
-                    param.args[0], (Integer) param.args[1], (Boolean) param.args[2], slot)) {
+                    param.getArgs()[0], (Integer) param.getArgs()[1], (Boolean) param.getArgs()[2], slot)) {
                     param.setResult(null);
                 }
             }
