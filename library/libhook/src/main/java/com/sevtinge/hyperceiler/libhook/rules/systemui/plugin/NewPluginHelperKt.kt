@@ -43,7 +43,6 @@ import com.sevtinge.hyperceiler.libhook.rules.systemui.statusbar.island.FocusNot
 import com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.isMoreSmallVersion
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.PluginFactory
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.faceisland.FaceIslandBridge
-import com.sevtinge.hyperceiler.libhook.utils.hookapi.faceisland.FaceIslandPluginHooks
 import io.github.lingqiqi5211.ezhooktool.core.findMethod
 import io.github.lingqiqi5211.ezhooktool.core.loadClass
 import io.github.lingqiqi5211.ezhooktool.xposed.dsl.createAfterHook
@@ -220,9 +219,7 @@ object NewPluginHelperKt : BaseHook() {
                     + PrefsBridge.getBoolean("system_ui_face_island_unlock"))
                 if (FaceIslandBridge.isTargetDevice()
                     && PrefsBridge.getBoolean("system_ui_face_island_unlock")) {
-                    if (FaceIslandBridge.ensureLoaded(pluginCtx, classLoader)) {
-                        FaceIslandPluginHooks.install(classLoader)
-                    }
+                    FaceIslandBridge.ensureLoaded(pluginCtx, classLoader)
                 }
             }
 

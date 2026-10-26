@@ -23,6 +23,9 @@ import com.sevtinge.hyperceiler.common.log.XposedLog;
 import com.sevtinge.hyperceiler.libhook.base.BaseHook;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import io.github.libxposed.api.XposedInterface;
 
 import io.github.lingqiqi5211.ezhooktool.xposed.common.HookParam;
 import io.github.lingqiqi5211.ezhooktool.xposed.java.IMethodHook;
@@ -33,15 +36,21 @@ import io.github.lingqiqi5211.ezhooktool.xposed.java.IMethodHook;
  */
 public final class FaceIslandPluginHooks {
     private static final String TAG = "FaceIslandPluginHooks";
-    private static boolean sInstalled;
+    private static ClassLoader sInstalledLoader;
+    private static final List<XposedInterface.HookHandle> HANDLES = new ArrayList<>();
+    public static synchronized void reset() {
+        for (XposedInterface.HookHandle handle : HANDLES) handle.unhook();
+        HANDLES.clear();
+        sInstalledLoader = null;
+    }
 
     private FaceIslandPluginHooks() {
     }
 
-    public static synchronized void install(ClassLoader loader) {
-        if (sInstalled || loader == null) {
-            return;
-        }
+    public static synchronized boolean install(ClassLoader loader) {
+        if (loader == null) return false;
+        if (sInstalledLoader == loader) return true;
+        reset();
         try {
             Class<?> factory = Class.forName(
                 "miui.systemui.dynamicisland.template.IslandTemplateFactory", true, loader);
@@ -133,12 +142,15 @@ public final class FaceIslandPluginHooks {
                     }
                 }
             });
-            sInstalled = true;
+            sInstalledLoader = loader;
             android.util.Log.i(TAG, "plugin hooks installed");
             XposedLog.i(TAG, "plugin hooks installed");
+            return true;
         } catch (Throwable t) {
+            reset();
             android.util.Log.e(TAG, "install plugin hooks failed", t);
             XposedLog.e(TAG, "install plugin hooks failed", t);
+            return false;
         }
     }
 
@@ -158,12 +170,38 @@ public final class FaceIslandPluginHooks {
         if (callback == null) {
             return;
         }
+        Method target = null;
         for (Method method : clazz.getDeclaredMethods()) {
             if (method.getName().equals(name) && method.getParameterCount() == count) {
-                BaseHook.hookMethod(method, callback);
-                return;
+                if (target != null) throw new IllegalStateException("Ambiguous hook: " + name);
+                target = method;
             }
         }
-        XposedLog.w(TAG, "method not found: " + clazz.getName() + "#" + name + "/" + count);
+        if (target == null) throw new IllegalStateException("method not found: " + clazz.getName() + "#" + name);
+        Class<?>[] types = target.getParameterTypes();
+        String data = "com.android.systemui.plugins.miui.dynamicisland.DynamicIslandData";
+        boolean valid = switch (name) {
+            case "createBigIslandTemplate", "createSmallIslandTemplate" ->
+                types[0] == Context.class && types[1].getName().equals(data)
+                && types[2].getName().equals("miui.systemui.dynamicisland.model.IslandTemplate")
+                && types[3] == android.view.ViewGroup.class && types[4] == boolean.class
+                && types[5].getName().equals("kotlin.jvm.functions.Function2")
+                && target.getReturnType() == Object.class;
+            case "showView", "hideView" -> types[0].getName().equals(data) && types[1] == boolean.class;
+            case "removeTemplate" -> types[0] == String.class;
+            case "updateCutoutWidth", "updateLeftWidth", "updateRightWidth" ->
+                types[0].getName().equals(data) && types[1] == int.class && types[2] == boolean.class;
+            case "setCancelTimeout" -> types[0].getName().equals(data)
+                && types[1].getName().equals("miui.systemui.dynamicisland.model.IslandTemplate");
+            case "getIslandTemplate" -> types[0].getName().equals(data)
+                && target.getReturnType().getName().equals("miui.systemui.dynamicisland.model.IslandTemplate");
+            case "removeDynamicIslandView" -> types[0] == String.class && types[1] == boolean.class;
+            case "onIslandClick" -> true;
+            default -> false;
+        };
+        if (!valid) throw new IllegalStateException("Incompatible hook: " + target);
+        XposedInterface.HookHandle handle = BaseHook.hookMethod(target, callback);
+        if (handle == null) throw new IllegalStateException("Hook failed: " + target);
+        HANDLES.add(handle);
     }
 }

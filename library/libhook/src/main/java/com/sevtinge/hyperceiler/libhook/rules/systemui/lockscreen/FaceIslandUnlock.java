@@ -167,9 +167,6 @@ public class FaceIslandUnlock extends BaseHook {
                 @Override
                 public void before(HookParam param) {
                     Object owner = getObjectField(param.getThisObject(), "this$0");
-                    if (owner != null) {
-                        FaceIslandBridge.onDoneRequest(owner, (Integer) param.getArgs()[0]);
-                    }
                     Object token = peek(CREDENTIAL_FINISH);
                     CredentialRequest state = new CredentialRequest();
                     if (token != null) {
@@ -177,6 +174,9 @@ public class FaceIslandUnlock extends BaseHook {
                         state.entered = FaceIslandBridge.enterCredentialRequest(token);
                     }
                     push(CREDENTIAL_REQUEST, state);
+                    if (owner != null) {
+                        FaceIslandBridge.onDoneRequest(owner, (Integer) param.getArgs()[0]);
+                    }
                 }
 
                 @Override

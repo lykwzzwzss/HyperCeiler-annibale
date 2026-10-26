@@ -59,7 +59,10 @@ public final class FaceIslandBridge {
     private static ClassLoader sLoader;
     private static Class<?> sHooks;
     private static Class<?> sPluginBridge;
-    private static boolean sFailed;
+    private static ClassLoader sParent;
+    private static boolean sReady;
+    private static final java.util.WeakHashMap<android.view.View, Integer> NATIVE_VIEWS =
+        new java.util.WeakHashMap<>();
 
     private static WeakReference<Object> sMonitor;
     private static WeakReference<Object> sMediator;
@@ -71,7 +74,7 @@ public final class FaceIslandBridge {
 
     public static boolean isReady() {
         synchronized (LOCK) {
-            return sHooks != null;
+            return sReady;
         }
     }
 
@@ -79,13 +82,26 @@ public final class FaceIslandBridge {
      * 在插件 ClassLoader 下加载补丁 dex。重复调用只初始化一次。
      */
     public static boolean ensureLoaded(Context context, ClassLoader pluginLoader) {
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(
+                () -> ensureLoaded(context, pluginLoader));
+            return false;
+        }
         synchronized (LOCK) {
-            if (sHooks != null) {
-                return true;
+            if (pluginLoader == null) return false;
+            if (sReady && sParent == pluginLoader) return true;
+            sReady = false;
+            for (Map.Entry<android.view.View, Integer> entry : NATIVE_VIEWS.entrySet()) {
+                entry.getKey().setVisibility(entry.getValue());
             }
-            if (sFailed) {
-                return false;
-            }
+            NATIVE_VIEWS.clear();
+            FaceIslandRuntimeHooks.retire();
+            FaceIslandPluginHooks.reset();
+            sHooks = null;
+            sPluginBridge = null;
+            sLoader = null;
+            sParent = null;
+            METHODS.clear();
             try {
                 android.util.Log.i(TAG, "loading face island dex");
                 byte[] systemUi = readResource(context, "faceisland/systemui.dex");
@@ -103,15 +119,30 @@ public final class FaceIslandBridge {
                     new ByteBuffer[]{ByteBuffer.wrap(systemUi), ByteBuffer.wrap(plugin)},
                     parent
                 );
-                sHooks = Class.forName(HOOKS_CLASS, true, loader);
-                sPluginBridge = Class.forName(PLUGIN_BRIDGE_CLASS, true, loader);
+                Class<?> hooks = Class.forName(HOOKS_CLASS, true, loader);
+                Class<?> pluginBridge = Class.forName(PLUGIN_BRIDGE_CLASS, true, loader);
+                FaceIslandRuntimeHooks.install(loader);
+                if (!FaceIslandPluginHooks.install(pluginLoader)) {
+                    throw new IllegalStateException("Required plugin hooks unavailable");
+                }
+                sHooks = hooks;
+                sPluginBridge = pluginBridge;
                 sLoader = loader;
+                sParent = pluginLoader;
+                sReady = true;
                 android.util.Log.i(TAG, "face island dex loaded, parent=" + parent);
                 XposedLog.i(TAG, "face island dex loaded, parent=" + parent);
                 replayBinds();
                 return true;
             } catch (Throwable t) {
-                sFailed = true;
+                sReady = false;
+                FaceIslandRuntimeHooks.retire();
+                FaceIslandPluginHooks.reset();
+                sHooks = null;
+                sPluginBridge = null;
+                sLoader = null;
+                sParent = null;
+                METHODS.clear();
                 android.util.Log.e(TAG, "load face island dex failed", t);
                 XposedLog.e(TAG, "load face island dex failed", t);
                 return false;
@@ -209,23 +240,31 @@ public final class FaceIslandBridge {
     // ---------------------------------------------------------------------
 
     public static void bindMonitor(Object obj) {
-        sMonitor = new WeakReference<>(obj);
-        callHooks("bindMonitor", obj);
+        synchronized (LOCK) {
+            sMonitor = new WeakReference<>(obj);
+            callHooks("bindMonitor", obj);
+        }
     }
 
     public static void bindMediator(Object obj) {
-        sMediator = new WeakReference<>(obj);
-        callHooks("bindMediator", obj);
+        synchronized (LOCK) {
+            sMediator = new WeakReference<>(obj);
+            callHooks("bindMediator", obj);
+        }
     }
 
     public static void bindRepository(Object obj) {
-        sRepository = new WeakReference<>(obj);
-        callHooks("bindRepository", obj);
+        synchronized (LOCK) {
+            sRepository = new WeakReference<>(obj);
+            callHooks("bindRepository", obj);
+        }
     }
 
     public static void bindIsland(Object obj) {
-        sIsland = new WeakReference<>(obj);
-        callHooks("bindIsland", obj);
+        synchronized (LOCK) {
+            sIsland = new WeakReference<>(obj);
+            callHooks("bindIsland", obj);
+        }
     }
 
     public static Object wrapFaceCallback(Object callback, int userId) {
@@ -341,7 +380,16 @@ public final class FaceIslandBridge {
     }
 
     public static void hideNativeFaceIcon(Object view, Object faceView) {
-        callHooks("hideNativeFaceIcon", view, faceView);
+        synchronized (LOCK) {
+            if (!sReady) return;
+            if (view instanceof android.view.View nativeView) {
+                NATIVE_VIEWS.putIfAbsent(nativeView, nativeView.getVisibility());
+            }
+            if (faceView instanceof android.view.View nativeFace) {
+                NATIVE_VIEWS.putIfAbsent(nativeFace, nativeFace.getVisibility());
+            }
+            callHooks("hideNativeFaceIcon", view, faceView);
+        }
     }
 
     // ---------------------------------------------------------------------
@@ -400,7 +448,7 @@ public final class FaceIslandBridge {
 
     private static Object callHooks(String name, Object... args) {
         synchronized (LOCK) {
-            if (sHooks == null) {
+            if (!sReady || sHooks == null) {
                 return null;
             }
             try {
@@ -419,7 +467,7 @@ public final class FaceIslandBridge {
 
     private static Object callPlugin(String name, Class<?>[] types, Object... args) {
         synchronized (LOCK) {
-            if (sPluginBridge == null) {
+            if (!sReady || sPluginBridge == null) {
                 return null;
             }
             try {
