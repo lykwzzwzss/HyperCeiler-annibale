@@ -44,7 +44,7 @@ public class FaceIslandUnlock extends BaseHook {
 
     private static final ThreadLocal<ArrayList<Object>> CREDENTIAL_FINISH =
         ThreadLocal.withInitial(ArrayList::new);
-    private static final ThreadLocal<ArrayList<Object>> CREDENTIAL_REQUEST =
+    private static final ThreadLocal<ArrayList<CredentialRequest>> CREDENTIAL_REQUEST =
         ThreadLocal.withInitial(ArrayList::new);
     private static final ThreadLocal<ArrayList<Object>> FINGERPRINT_POLICY =
         ThreadLocal.withInitial(ArrayList::new);
@@ -52,7 +52,6 @@ public class FaceIslandUnlock extends BaseHook {
         ThreadLocal.withInitial(ArrayList::new);
     private static final ThreadLocal<ArrayList<Object>> EXIT_CALLBACK =
         ThreadLocal.withInitial(ArrayList::new);
-    private static final Object SKIP = new Object();
 
     @Override
     public void init() {
@@ -155,19 +154,19 @@ public class FaceIslandUnlock extends BaseHook {
                         FaceIslandBridge.onDoneRequest(owner, (Integer) param.getArgs()[0]);
                     }
                     Object token = peek(CREDENTIAL_FINISH);
+                    CredentialRequest state = new CredentialRequest();
                     if (token != null) {
-                        Object entered = FaceIslandBridge.enterCredentialRequest(token);
-                        push(CREDENTIAL_REQUEST, entered != null ? entered : SKIP);
-                    } else {
-                        push(CREDENTIAL_REQUEST, SKIP);
+                        state.active = true;
+                        state.entered = FaceIslandBridge.enterCredentialRequest(token);
                     }
+                    push(CREDENTIAL_REQUEST, state);
                 }
 
                 @Override
                 public void after(HookParam param) {
-                    Object entered = pop(CREDENTIAL_REQUEST);
-                    if (entered != SKIP) {
-                        FaceIslandBridge.leaveCredentialRequest(entered);
+                    CredentialRequest state = pop(CREDENTIAL_REQUEST);
+                    if (state != null && state.active) {
+                        FaceIslandBridge.leaveCredentialRequest(state.entered);
                     }
                 }
             });
@@ -565,12 +564,17 @@ public class FaceIslandUnlock extends BaseHook {
         XposedLog.w(TAG, "method not found: " + clazz.getName() + "#" + name + "/" + count);
     }
 
-    private static void push(ThreadLocal<ArrayList<Object>> stack, Object value) {
+    private static final class CredentialRequest {
+        boolean active;
+        Object entered;
+    }
+
+    private static <T> void push(ThreadLocal<ArrayList<T>> stack, T value) {
         stack.get().add(value);
     }
 
-    private static Object pop(ThreadLocal<ArrayList<Object>> stack) {
-        ArrayList<Object> list = stack.get();
+    private static <T> T pop(ThreadLocal<ArrayList<T>> stack) {
+        ArrayList<T> list = stack.get();
         return list.isEmpty() ? null : list.remove(list.size() - 1);
     }
 

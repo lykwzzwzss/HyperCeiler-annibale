@@ -135,7 +135,15 @@ public final class FaceIslandBridge {
             } catch (Throwable ignored) {
             }
         }
-        // 部分框架的模块 ClassLoader 不暴露资源，退回模块 APK 读取。
+        // 模块资源被 R8/打包规则裁剪时，退回模块 APK 的 assets。
+        try {
+            android.content.res.Resources resources = context.getPackageManager()
+                .getResourcesForApplication(BuildConfig.APP_MODULE_ID);
+            try (InputStream in = resources.getAssets().open(name)) {
+                return readAll(in);
+            }
+        } catch (Throwable ignored) {
+        }
         try {
             ApplicationInfo info = context.getPackageManager()
                 .getApplicationInfo(BuildConfig.APP_MODULE_ID, 0);
