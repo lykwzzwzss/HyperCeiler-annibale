@@ -1852,4 +1852,6 @@
     <string name="close_source">Close source projects</string>
     <string name="system_framework_disable_thermal_brightness_cap">Disable thermal screen brightness cap</string>
     <string name="system_framework_disable_thermal_brightness_cap_desc">Android 17 / HyperOS 4: ignores software thermal brightness caps. May increase heat and battery use. Restart the phone after changing.</string>
+    <string name="system_ui_face_island_unlock">Lock screen face island</string>
+    <string name="system_ui_face_island_unlock_desc">Show the face unlock animation as a Dynamic Island. Only for REDMI K90 / HyperOS 4; restart SystemUI after changing.</string>
 </resources>

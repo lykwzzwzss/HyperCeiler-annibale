@@ -42,6 +42,8 @@ import com.sevtinge.hyperceiler.libhook.rules.systemui.plugin.systemui.VolumeOrQ
 import com.sevtinge.hyperceiler.libhook.rules.systemui.statusbar.island.FocusNotifLyric
 import com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.isMoreSmallVersion
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.PluginFactory
+import com.sevtinge.hyperceiler.libhook.utils.hookapi.faceisland.FaceIslandBridge
+import com.sevtinge.hyperceiler.libhook.utils.hookapi.faceisland.FaceIslandPluginHooks
 import io.github.lingqiqi5211.ezhooktool.core.findMethod
 import io.github.lingqiqi5211.ezhooktool.core.loadClass
 import io.github.lingqiqi5211.ezhooktool.xposed.dsl.createAfterHook
@@ -211,6 +213,16 @@ object NewPluginHelperKt : BaseHook() {
                 }
 
                 loadClassLoaders(componentName.toString(), classLoader, enabledLoaders)
+            }
+
+            factory.componentNames(1, "miui.systemui.notification.NotificationDynamicIslandPluginImpl") -> {
+                android.util.Log.i("FaceIsland", "dynamic island plugin loaded, pref="
+                    + PrefsBridge.getBoolean("system_ui_face_island_unlock"))
+                if (PrefsBridge.getBoolean("system_ui_face_island_unlock")) {
+                    if (FaceIslandBridge.ensureLoaded(pluginCtx, classLoader)) {
+                        FaceIslandPluginHooks.install(classLoader)
+                    }
+                }
             }
 
             factory.componentNames(1, "miui.systemui.notification.NotificationStatPluginImpl"),

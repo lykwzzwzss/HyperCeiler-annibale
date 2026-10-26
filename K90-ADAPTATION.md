@@ -43,3 +43,12 @@ Android 17 / ARM64 包信息及 APK v2 签名校验通过。当前使用测试�
 ### 首页提示调整（2026-10-09）
 
 按使用者要求，移除首页“当前设备运行的系统版本未（完全）适配”的通用红字。保留 `DeviceHelper.System` 中原有的系统支持状态、支持版本页面及具体功能兼容性判断。
+
+
+## 锁屏人脸解锁岛
+
+- 功能开关：系统界面 → 锁屏 → 其他 → 锁屏人脸解锁岛。默认关闭，开启后重启系统界面。
+- 两段补丁 dex 以 `app/src/main/assets/faceisland/*.dex` 和 `library/libhook/src/main/resources/faceisland/*.dex` 随模块分发，在 `miui.systemui.plugin` 的 ClassLoader 下通过 `InMemoryDexClassLoader` 加载。
+- SystemUI 侧按补丁注入点改写为 Xposed Hook，覆盖人脸认证、指纹、凭据、休眠/唤醒、动态岛发布与原生人脸图标隐藏；插件侧接管模板工厂的创建、显隐、宽度和移除。
+- 仅对 `annibale` 生效，依赖 HyperOS 4 的动态岛插件组件 `miui.systemui.notification.NotificationDynamicIslandPluginImpl`。
+- 已在 K90（annibale，OS4.0.5.0.XPKCNXM / Android 17）实测纯人脸解锁，解锁动画与灵动岛显示正常；未验证指纹/凭据动画及息屏退场动画。

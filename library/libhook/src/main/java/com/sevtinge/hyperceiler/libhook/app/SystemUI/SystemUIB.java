@@ -61,6 +61,7 @@ import com.sevtinge.hyperceiler.libhook.rules.systemui.controlcenter.tiles.Reduc
 import com.sevtinge.hyperceiler.libhook.rules.systemui.controlcenter.tiles.SnowLeopardModeTile;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.controlcenter.tiles.SunlightModeTile;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.lockscreen.AllowThirdLockScreenUseFace;
+import com.sevtinge.hyperceiler.libhook.rules.systemui.lockscreen.FaceIslandUnlock;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.lockscreen.DisableUnlockByBleToast;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.lockscreen.HideLockScreenHint;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.lockscreen.HideLockScreenStatusBar;
@@ -138,6 +139,7 @@ public class SystemUIB extends BaseLoad {
         initHook(AllowThirdLockScreenUseFace.INSTANCE, PrefsBridge.getBoolean("system_ui_lock_screen_allow_third_face"));
         initHook(new DisableUnlockByBleToast(), PrefsBridge.getBoolean("system_ui_lock_screen_disable_unlock_by_ble_toast"));
         initHook(LockScreenDoubleTapToSleep.INSTANCE, PrefsBridge.getBoolean("system_ui_lock_screen_double_lock"));
+        initHook(new FaceIslandUnlock(), PrefsBridge.getBoolean("system_ui_face_island_unlock"));
 
         // 状态栏图标
         initHook(new StatusBarIcon(), true);
