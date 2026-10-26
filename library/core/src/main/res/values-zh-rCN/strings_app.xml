@@ -1812,4 +1812,6 @@
     <string name="close_source">闭源项目</string>
     <string name="system_framework_disable_thermal_brightness_cap">禁止高温降低亮度上限</string>
     <string name="system_framework_disable_thermal_brightness_cap_desc">适配 Android 17 / HyperOS 4，仅解除显示软件温控限亮。可能增加发热和耗电，修改后重启手机生效。</string>
+    <string name="system_ui_face_island_unlock">锁屏人脸解锁岛</string>
+    <string name="system_ui_face_island_unlock_desc">在锁屏人脸解锁时用灵动岛展示解锁动画。仅适用于 REDMI K90 / HyperOS 4，修改后需重启系统界面。</string>
 </resources>
