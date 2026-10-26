@@ -52,3 +52,10 @@ Android 17 / ARM64 包信息及 APK v2 签名校验通过。当前使用测试�
 - SystemUI 侧按补丁注入点改写为 Xposed Hook，覆盖人脸认证、指纹、凭据、休眠/唤醒、动态岛发布与原生人脸图标隐藏；插件侧接管模板工厂的创建、显隐、宽度和移除。
 - 仅对 `annibale` 生效，依赖 HyperOS 4 的动态岛插件组件 `miui.systemui.notification.NotificationDynamicIslandPluginImpl`。
 - 已在 K90（annibale，OS4.0.5.0.XPKCNXM / Android 17）实测纯人脸解锁，解锁动画与灵动岛显示正常；未验证指纹/凭据动画及息屏退场动画。
+
+### 静态审查记录（2026-10-26）
+
+- 对照补丁 dex 的 35 个 SystemUI 注入点和 4 个插件注入点逐项核对，补齐了 `onExitAnimationCreated`、`onCredentialPending` 的调用时序，并把 `detect$2` 的检测事件移到 `_isDetectRunning` 更新之后。
+- 为人脸成功回调增加 `_isAuthRunning` 过滤，为 `onFaceAuthenticated` 增加 secure-lock（4096）过滤，避免取消后的迟到回调触发幽灵动画。
+- 原生人脸 View 改为先走 MIUI 的 `setVisibility` 流程、再隐藏，保留原本的 listener/动画回调；`KeyguardFaceViewBinder` 仅在 `faceView` 非空时隐藏容器。
+- 未解决：动态岛首次创建时 MIUI `OneHandedModeRepository` 仍会记录一次 `Resource ID #0x0`；不阻断人脸岛显示。`FaceIslandExitBridge` 尚未注入插件 ClassLoader，息屏/AOD 退场桥接未验证。
