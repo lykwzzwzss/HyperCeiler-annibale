@@ -536,10 +536,11 @@ public class FaceIslandUnlock extends BaseHook {
             });
             hook(faceView, "setVisibility", 1, new IMethodHook() {
                 @Override
-                public void before(HookParam param) {
+                public void after(HookParam param) {
                     View view = (View) param.getThisObject();
                     if (view.getId() == BOUNCER_FACE_VIEW_ID && ((Integer) param.getArgs()[0]) == 0) {
-                        param.getArgs()[0] = 4;
+                        // 保留 MIUI 原本的显示/动画与 listener 回调，再把最终可见性改为隐藏。
+                        FaceIslandBridge.hideNativeFaceIcon(view, view);
                     }
                 }
             });
