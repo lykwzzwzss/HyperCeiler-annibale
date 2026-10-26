@@ -19,8 +19,6 @@
 package com.sevtinge.hyperceiler.libhook.utils.hookapi.faceisland;
 
 import android.content.Context;
-import android.view.View;
-
 import com.sevtinge.hyperceiler.common.log.XposedLog;
 import com.sevtinge.hyperceiler.libhook.base.BaseHook;
 
@@ -53,8 +51,7 @@ public final class FaceIslandPluginHooks {
                     Object view = FaceIslandBridge.createTemplateView(
                         (Context) param.getArgs()[0], param.getArgs()[1], param.getArgs()[3],
                         (Boolean) param.getArgs()[4], false);
-                    android.util.Log.i(TAG, "create big view=" + view);
-                    android.util.Log.i(TAG, "create small view=" + view);
+                    android.util.Log.d(TAG, "create big view=" + view);
                     if (view != null) {
                         param.setResult(view);
                     }
@@ -66,6 +63,7 @@ public final class FaceIslandPluginHooks {
                     Object view = FaceIslandBridge.createTemplateView(
                         (Context) param.getArgs()[0], param.getArgs()[1], param.getArgs()[3],
                         (Boolean) param.getArgs()[4], true);
+                    android.util.Log.d(TAG, "create small view=" + view);
                     if (view != null) {
                         param.setResult(view);
                     }

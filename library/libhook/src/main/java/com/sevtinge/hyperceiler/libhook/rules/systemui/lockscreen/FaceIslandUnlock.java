@@ -127,7 +127,7 @@ public class FaceIslandUnlock extends BaseHook {
             });
             hook(mediator, "handleCancelKeyguardExitAnimation", 0, new IMethodHook() {
                 @Override
-                public void before(HookParam param) {
+                public void after(HookParam param) {
                     FaceIslandBridge.onHideCancelled(param.getThisObject());
                 }
             });
@@ -207,10 +207,17 @@ public class FaceIslandUnlock extends BaseHook {
         }
         hook(service, "onStartedGoingToSleep", 1, new IMethodHook() {
             @Override
-            public void after(HookParam param) {
+            public void before(HookParam param) {
                 Object mediator = mediatorOf(param.getThisObject());
                 if (mediator != null) {
                     FaceIslandBridge.onSleepStarted(mediator);
+                }
+            }
+
+            @Override
+            public void after(HookParam param) {
+                Object mediator = mediatorOf(param.getThisObject());
+                if (mediator != null) {
                     FaceIslandBridge.onKeyguardState(mediator);
                 }
             }
@@ -312,7 +319,7 @@ public class FaceIslandUnlock extends BaseHook {
         if (detect != null) {
             hook(detect, "invokeSuspend", 1, new IMethodHook() {
                 @Override
-                public void before(HookParam param) {
+                public void after(HookParam param) {
                     Object owner = getObjectField(param.getThisObject(), "this$0");
                     if (owner != null) {
                         FaceIslandBridge.onDetectionChanged(owner);
@@ -454,14 +461,17 @@ public class FaceIslandUnlock extends BaseHook {
             hook(preHide, "startPreHideAnimation", 1, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
-                    Object token = peek(CREDENTIAL_FINISH);
                     Object callback = param.getArgs()[0];
-                    if (token == null || callback == null) {
+                    if (callback == null) {
                         return;
                     }
                     Object mediator = getObjectField(callback, "this$0");
                     int user = getIntField(callback, "mUserId");
-                    FaceIslandBridge.onCredentialPending(mediator, user, token, callback);
+                    FaceIslandBridge.onExitAnimationCreated(callback, mediator, user);
+                    Object token = peek(CREDENTIAL_FINISH);
+                    if (token != null) {
+                        FaceIslandBridge.onCredentialPending(mediator, user, token, callback);
+                    }
                 }
             });
         }

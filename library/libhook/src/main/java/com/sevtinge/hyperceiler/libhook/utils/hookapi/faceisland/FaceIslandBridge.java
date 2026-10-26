@@ -409,11 +409,7 @@ public final class FaceIslandBridge {
                     XposedLog.w(TAG, "FaceIslandHooks." + name + " not found");
                     return null;
                 }
-                Object result = method.invoke(null, args);
-                if (name.startsWith("on") || name.startsWith("enter") || name.startsWith("bind")) {
-                    android.util.Log.d(TAG, "hook " + name + " ok");
-                }
-                return result;
+                return method.invoke(null, args);
             } catch (Throwable t) {
                 XposedLog.w(TAG, "FaceIslandHooks." + name + " failed", t);
                 return null;
@@ -428,11 +424,7 @@ public final class FaceIslandBridge {
             }
             try {
                 Method method = sPluginBridge.getMethod(name, types);
-                Object result = method.invoke(null, args);
-                if (name.startsWith("on") || name.startsWith("enter") || name.startsWith("bind")) {
-                    android.util.Log.d(TAG, "hook " + name + " ok");
-                }
-                return result;
+                return method.invoke(null, args);
             } catch (Throwable t) {
                 XposedLog.w(TAG, "FaceIslandTemplateBridge." + name + " failed", t);
                 return null;
