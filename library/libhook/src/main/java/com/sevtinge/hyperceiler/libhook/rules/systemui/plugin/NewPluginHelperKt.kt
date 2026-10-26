@@ -216,6 +216,8 @@ object NewPluginHelperKt : BaseHook() {
             }
 
             factory.componentNames(1, "miui.systemui.notification.NotificationDynamicIslandPluginImpl") -> {
+                android.util.Log.i("FaceIsland", "dynamic island plugin loaded, pref="
+                    + PrefsBridge.getBoolean("system_ui_face_island_unlock"))
                 if (PrefsBridge.getBoolean("system_ui_face_island_unlock")) {
                     if (FaceIslandBridge.ensureLoaded(pluginCtx, classLoader)) {
                         FaceIslandPluginHooks.install(classLoader)

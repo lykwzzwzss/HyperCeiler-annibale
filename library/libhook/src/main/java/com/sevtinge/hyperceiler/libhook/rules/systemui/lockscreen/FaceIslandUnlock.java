@@ -55,6 +55,7 @@ public class FaceIslandUnlock extends BaseHook {
 
     @Override
     public void init() {
+        android.util.Log.i("FaceIsland", "init device=" + android.os.Build.DEVICE);
         if (!FaceIslandBridge.isTargetDevice()) {
             XposedLog.w(TAG, "unsupported device: " + android.os.Build.DEVICE);
             return;
@@ -67,6 +68,7 @@ public class FaceIslandUnlock extends BaseHook {
         hookCredential();
         hookFaceView();
         hookIsland();
+        android.util.Log.i("FaceIsland", "hooks installed");
     }
 
     // ------------------------------------------------------------------

@@ -134,8 +134,10 @@ public final class FaceIslandPluginHooks {
                 }
             });
             sInstalled = true;
+            android.util.Log.i(TAG, "plugin hooks installed");
             XposedLog.i(TAG, "plugin hooks installed");
         } catch (Throwable t) {
+            android.util.Log.e(TAG, "install plugin hooks failed", t);
             XposedLog.e(TAG, "install plugin hooks failed", t);
         }
     }

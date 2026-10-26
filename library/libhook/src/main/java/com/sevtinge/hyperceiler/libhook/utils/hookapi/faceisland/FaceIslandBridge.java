@@ -87,11 +87,15 @@ public final class FaceIslandBridge {
                 return false;
             }
             try {
+                android.util.Log.i(TAG, "loading face island dex");
                 byte[] systemUi = readResource(context, "faceisland/systemui.dex");
                 byte[] plugin = readResource(context, "faceisland/plugin.dex");
                 if (systemUi == null || plugin == null) {
-                    throw new IOException("faceisland dex resource missing");
+                    throw new IOException("faceisland dex resource missing: "
+                        + (systemUi == null ? "systemui " : "")
+                        + (plugin == null ? "plugin" : ""));
                 }
+                android.util.Log.i(TAG, "dex sizes " + systemUi.length + "/" + plugin.length);
                 ClassLoader parent = pluginLoader != null
                     ? pluginLoader
                     : FaceIslandBridge.class.getClassLoader();
@@ -102,11 +106,13 @@ public final class FaceIslandBridge {
                 sHooks = Class.forName(HOOKS_CLASS, true, loader);
                 sPluginBridge = Class.forName(PLUGIN_BRIDGE_CLASS, true, loader);
                 sLoader = loader;
+                android.util.Log.i(TAG, "face island dex loaded, parent=" + parent);
                 XposedLog.i(TAG, "face island dex loaded, parent=" + parent);
                 replayBinds();
                 return true;
             } catch (Throwable t) {
                 sFailed = true;
+                android.util.Log.e(TAG, "load face island dex failed", t);
                 XposedLog.e(TAG, "load face island dex failed", t);
                 return false;
             }
@@ -345,7 +351,8 @@ public final class FaceIslandBridge {
     public static Object createTemplateView(Context context, Object data, Object parent,
                                              boolean big, boolean fake) {
         return callPlugin("create",
-            new Class<?>[]{Context.class, Object.class, Object.class, boolean.class, boolean.class},
+            new Class<?>[]{Context.class, Object.class, android.view.ViewGroup.class,
+                boolean.class, boolean.class},
             context, data, parent, big, fake);
     }
 
