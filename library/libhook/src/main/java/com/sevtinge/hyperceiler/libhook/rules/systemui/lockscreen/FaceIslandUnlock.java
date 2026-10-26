@@ -357,7 +357,7 @@ public class FaceIslandUnlock extends BaseHook {
             });
         }
 
-        Class<?> faceManager = findClassIfExists("android.hardware.face.BaseMiuiFaceManager");
+        Class<?> faceManager = findClassIfExists("android.hardware.face.MiuiFaceManager");
         if (faceManager != null) {
             hook(faceManager, "authenticate", 6, new IMethodHook() {
                 @Override
