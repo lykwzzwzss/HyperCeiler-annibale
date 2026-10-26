@@ -53,6 +53,8 @@ public final class FaceIslandPluginHooks {
                     Object view = FaceIslandBridge.createTemplateView(
                         (Context) param.getArgs()[0], param.getArgs()[1], param.getArgs()[3],
                         (Boolean) param.getArgs()[4], false);
+                    android.util.Log.i(TAG, "create big view=" + view);
+                    android.util.Log.i(TAG, "create small view=" + view);
                     if (view != null) {
                         param.setResult(view);
                     }

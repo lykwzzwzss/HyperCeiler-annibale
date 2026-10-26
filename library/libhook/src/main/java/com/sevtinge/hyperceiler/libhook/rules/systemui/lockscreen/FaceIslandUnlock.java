@@ -89,6 +89,8 @@ public class FaceIslandUnlock extends BaseHook {
         hook(clazz, "onFaceAuthenticated", 2, new IMethodHook() {
             @Override
             public void after(HookParam param) {
+                android.util.Log.i("FaceIsland", "onFaceAuthenticated user="
+                    + param.getArgs()[0] + " strong=" + param.getArgs()[1]);
                 FaceIslandBridge.onFaceAccepted(param.getThisObject(),
                     (Integer) param.getArgs()[0], (Boolean) param.getArgs()[1]);
             }
@@ -96,6 +98,8 @@ public class FaceIslandUnlock extends BaseHook {
         hook(clazz, "onFingerprintAuthenticated", 2, new IMethodHook() {
             @Override
             public void after(HookParam param) {
+                android.util.Log.i("FaceIsland", "onFingerprintAuthenticated user="
+                    + param.getArgs()[0] + " strong=" + param.getArgs()[1]);
                 FaceIslandBridge.onFingerprintProduced(param.getThisObject(),
                     (Integer) param.getArgs()[0], (Boolean) param.getArgs()[1]);
             }
@@ -337,6 +341,7 @@ public class FaceIslandUnlock extends BaseHook {
             hook(faceCallback, "onAuthenticationSucceeded", 1, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
+                    android.util.Log.i("FaceIsland", "face produced " + param.getArgs()[0]);
                     FaceIslandBridge.onFaceProduced(param.getArgs()[0]);
                 }
             });
@@ -371,6 +376,8 @@ public class FaceIslandUnlock extends BaseHook {
                         return;
                     }
                     int user = (Integer) param.getArgs()[5];
+                    android.util.Log.i("FaceIsland", "wrap face callback "
+                        + callback.getClass().getName() + " user=" + user);
                     Object wrapped = FaceIslandBridge.wrapFaceCallback(callback, user);
                     if (wrapped != null) {
                         param.getArgs()[3] = wrapped;
