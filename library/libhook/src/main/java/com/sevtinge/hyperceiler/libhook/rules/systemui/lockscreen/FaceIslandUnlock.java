@@ -89,10 +89,19 @@ public class FaceIslandUnlock extends BaseHook {
         hook(clazz, "onFaceAuthenticated", 2, new IMethodHook() {
             @Override
             public void after(HookParam param) {
+                int user = (Integer) param.getArgs()[0];
+                try {
+                    Object tracker = getObjectField(param.getThisObject(), "mStrongAuthTracker");
+                    int strong = (Integer) callMethod(tracker, "getStrongAuthForUser", user);
+                    if ((strong & 4096) != 0) {
+                        return;
+                    }
+                } catch (Throwable ignored) {
+                }
                 android.util.Log.i("FaceIsland", "onFaceAuthenticated user="
-                    + param.getArgs()[0] + " strong=" + param.getArgs()[1]);
+                    + user + " strong=" + param.getArgs()[1]);
                 FaceIslandBridge.onFaceAccepted(param.getThisObject(),
-                    (Integer) param.getArgs()[0], (Boolean) param.getArgs()[1]);
+                    user, (Boolean) param.getArgs()[1]);
             }
         });
         hook(clazz, "onFingerprintAuthenticated", 2, new IMethodHook() {
@@ -348,6 +357,17 @@ public class FaceIslandUnlock extends BaseHook {
             hook(faceCallback, "onAuthenticationSucceeded", 1, new IMethodHook() {
                 @Override
                 public void before(HookParam param) {
+                    // 补丁在 _isAuthRunning 为 true 时才上报 FACE_PRODUCED；
+                    // 这里做同样的过滤，避免取消后迟到的回调触发幽灵动画。
+                    try {
+                        Object repo = getObjectField(param.getThisObject(), "this$0");
+                        Object running = callMethod(
+                            getObjectField(repo, "_isAuthRunning"), "getValue");
+                        if (Boolean.FALSE.equals(running)) {
+                            return;
+                        }
+                    } catch (Throwable ignored) {
+                    }
                     android.util.Log.i("FaceIsland", "face produced " + param.getArgs()[0]);
                     FaceIslandBridge.onFaceProduced(param.getArgs()[0]);
                 }
@@ -465,8 +485,14 @@ public class FaceIslandUnlock extends BaseHook {
                     if (callback == null) {
                         return;
                     }
-                    Object mediator = getObjectField(callback, "this$0");
-                    int user = getIntField(callback, "mUserId");
+                    Object mediator;
+                    int user;
+                    try {
+                        mediator = getObjectField(callback, "this$0");
+                        user = getIntField(callback, "mUserId");
+                    } catch (Throwable t) {
+                        return;
+                    }
                     FaceIslandBridge.onExitAnimationCreated(callback, mediator, user);
                     Object token = peek(CREDENTIAL_FINISH);
                     if (token != null) {
@@ -489,7 +515,7 @@ public class FaceIslandUnlock extends BaseHook {
                 public void after(HookParam param) {
                     Object container = getObjectField(param.getThisObject(), "faceContainerView");
                     Object face = getObjectField(param.getThisObject(), "faceView");
-                    if (container != null) {
+                    if (container != null && face != null) {
                         FaceIslandBridge.hideNativeFaceIcon(container, face);
                     }
                 }
