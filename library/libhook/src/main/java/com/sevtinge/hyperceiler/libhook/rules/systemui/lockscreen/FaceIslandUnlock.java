@@ -55,6 +55,8 @@ public class FaceIslandUnlock extends BaseHook {
 
     @Override
     public void init() {
+        // 绑定事件可能早于插件 ClassLoader 就绪，FaceIslandBridge 会缓存对象并在 dex
+        // 加载完成后重放 bind*；这里只负责把 Hook 入口装好。
         android.util.Log.i("FaceIsland", "init device=" + android.os.Build.DEVICE);
         if (!FaceIslandBridge.isTargetDevice()) {
             XposedLog.w(TAG, "unsupported device: " + android.os.Build.DEVICE);
