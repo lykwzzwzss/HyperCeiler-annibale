@@ -61,7 +61,7 @@ public class PermissionItemView extends FrameLayout implements Checkable {
     }
 
     public void updateItemState(boolean checked) {
-        mItemIcon.setImageDrawable(getResources().getDrawable(R.drawable.provision_picker_btn_radio));
+        mItemIcon.setImageDrawable(getResources().getDrawable(R.drawable.provision_picker_btn_radio, getContext().getTheme()));
         mItemIcon.setVisibility(checked ? VISIBLE : INVISIBLE);
     }
 

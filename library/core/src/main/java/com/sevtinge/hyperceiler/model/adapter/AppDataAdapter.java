@@ -321,7 +321,7 @@ public class AppDataAdapter extends CardGroupAdapter<AppViewHolder> {
         private void setupClickListeners() {
             // Item 点击监听
             mItemView.setOnClickListener(v -> {
-                int position = getAdapterPosition();
+                int position = getBindingAdapterPosition();
                 if (position != RecyclerView.NO_POSITION && position < mAppDataList.size()) {
                     AppData appData = mAppDataList.get(position);
 
@@ -344,7 +344,7 @@ public class AppDataAdapter extends CardGroupAdapter<AppViewHolder> {
 
             // Checkbox 点击监听 - 防止事件冒泡
             mSelectCheckbox.setOnClickListener(v -> {
-                int position = getAdapterPosition();
+                int position = getBindingAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
                     if (mMode == SubPickerActivity.LAUNCHER_PICK_MODE) {
                         if (position < mAppDataList.size() && mOnItemClickListener != null) {

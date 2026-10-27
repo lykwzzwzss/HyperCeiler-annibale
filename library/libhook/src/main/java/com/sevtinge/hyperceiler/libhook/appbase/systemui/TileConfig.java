@@ -52,6 +52,8 @@ public final class TileConfig {
     private final int iconOn;
     @DrawableRes
     private final int iconOff;
+    /** 注册时若面板里还没有该磁贴，自动追加一次 */
+    private final boolean autoAddToPanel;
 
     private TileConfig(Builder builder) {
         this.tileClass = builder.tileClass;
@@ -60,6 +62,7 @@ public final class TileConfig {
         this.labelResId = builder.labelResId;
         this.iconOn = builder.iconOn;
         this.iconOff = builder.iconOff;
+        this.autoAddToPanel = builder.autoAddToPanel;
     }
 
     //==================== Getters ====================
@@ -92,6 +95,13 @@ public final class TileConfig {
     @DrawableRes
     public int getIconOff() {
         return iconOff;
+    }
+
+    /**
+     * 面板里没有该磁贴时，是否自动追加到 {@code sysui_qs_tiles}
+     */
+    public boolean isAutoAddToPanel() {
+        return autoAddToPanel;
     }
 
     /**
@@ -138,6 +148,7 @@ public final class TileConfig {
         private int labelResId = -1;
         private int iconOn = -1;
         private int iconOff = -1;
+        private boolean autoAddToPanel;
 
         public Builder() {
         }
@@ -216,6 +227,18 @@ public final class TileConfig {
         public Builder setIcons(@DrawableRes int iconOn, @DrawableRes int iconOff) {
             this.iconOn = iconOn;
             this.iconOff = iconOff;
+            return this;
+        }
+
+        /**
+         * 面板里还没有该磁贴时自动追加一次
+         * <p>
+         * HyperOS 4 的「编辑与排序」不再读取 {@code miui_quick_settings_tiles_stock}，
+         * 运行时替换资源串已无法让磁贴出现在可选列表里，只能直接写用户磁贴列表兜底。
+         * 写入后会留下一次性标记：用户手动移除后不再强加。
+         */
+        public Builder setAutoAddToPanel(boolean autoAddToPanel) {
+            this.autoAddToPanel = autoAddToPanel;
             return this;
         }
 

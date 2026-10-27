@@ -40,7 +40,7 @@ jobs:
           GIT_TOKEN: ${{ github.token }}
         run: |
           chmod +x gradlew
-          ./gradlew :library:libhook:testCanaryUnitTest :app:assembleCanary -Pandroid.onlyEnableUnitTestForTheTestedBuildType=false --console=plain --no-daemon --max-workers=2
+          ./gradlew :library:libhook:testDebugUnitTest :app:testDebugUnitTest :app:assembleCanary --console=plain --no-daemon --max-workers=2
       - name: Record APK hashes
         run: |
           find app/build/outputs/apk/canary -type f -name '*.apk' -exec sha256sum {} + | tee apk-sha256.txt
@@ -52,9 +52,27 @@ jobs:
           path: |
             app/build/outputs/apk/canary/*.apk
             apk-sha256.txt
-            library/libhook/build/test-results/testCanaryUnitTest/*.xml
+            library/libhook/build/test-results/testDebugUnitTest/*.xml
+            app/build/test-results/testDebugUnitTest/*.xml
           if-no-files-found: error
           retention-days: 14
       - name: Clean signing files
         if: always()
         run: rm -f signing.properties key.jks
+
+  native_host_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run host native tests
+        shell: bash
+        run: bash tests/run_host_native_tests.sh
+
+      - name: Upload test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-native-test-logs
+          path: /tmp/nativehook-host-tests/*.log
+          if-no-files-found: ignore

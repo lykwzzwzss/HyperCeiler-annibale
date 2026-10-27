@@ -45,7 +45,7 @@ public class ProcessInfo implements Parcelable {
         pkgListSize = in.readInt();
         pid = in.readInt();
         userId = in.readInt();
-        appInfo = in.readParcelable(ApplicationInfo.class.getClassLoader());
+        appInfo = in.readParcelable(ApplicationInfo.class.getClassLoader(), ApplicationInfo.class);
         processName = in.readString();
         packageName = in.readString();
         isLauncher = in.readByte() != 0;

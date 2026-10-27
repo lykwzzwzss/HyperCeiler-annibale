@@ -26,6 +26,8 @@ ADB 配置接口仅包含在 Debug 构建中，Release / Beta / Canary 不提供
 
 上游更新与 K90 适用性核对见 [2026-10-27 记录](UPSTREAM-K90-20261027.md)。
 
+当前源码已合入 K90 Pro Max 上游至 `2fee7c825`（2026-10-20），保留 K90 专有修复与原生版本守卫；已发布的 4712 安装包不包含这次上游合并。
+
 ## 使用前说明
 
 请在 [LSPosed](https://github.com/LSPosed/LSPosed/releases) 中启用 HyperCeiler，然后在 HyperCeiler 应用内启用对应的功能，重启作用域（需要 Root 权限）。

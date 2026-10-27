@@ -20,12 +20,17 @@ package com.sevtinge.hyperceiler.libhook.rules.systemui.controlcenter
 
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.core.view.isVisible
-import com.sevtinge.hyperceiler.common.log.XposedLog
 import com.sevtinge.hyperceiler.common.utils.PrefsBridge
 import com.sevtinge.hyperceiler.libhook.base.BaseHook
 import com.sevtinge.hyperceiler.libhook.utils.api.PropUtils
+import com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.isMoreHyperOSVersion
+import io.github.libxposed.api.XposedInterface
+import io.github.lingqiqi5211.ezhooktool.xposed.common.HookParam
+import io.github.lingqiqi5211.ezhooktool.xposed.java.IMethodHook
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
+import java.util.concurrent.atomic.AtomicBoolean
 import io.github.lingqiqi5211.ezhooktool.core.callMethod
 import io.github.lingqiqi5211.ezhooktool.core.callMethodAs
 import io.github.lingqiqi5211.ezhooktool.core.findMethod
@@ -36,23 +41,31 @@ import io.github.lingqiqi5211.ezhooktool.xposed.dsl.getObjectFieldAs
 import io.github.lingqiqi5211.ezhooktool.xposed.dsl.setIntField
 
 /**
- * OS3 控制中心运行商名称自定义
+ * 控制中心运营商名称自定义；设置变更后重启系统界面。
  */
 object CustomCarrierText : BaseHook() {
+    private const val ON_MEASURE = "onMeasure"
+    private const val CARRIER_TEXT_CHANGED = "onCarrierTextChanged"
+    private const val CARRIER_CALLBACK = "com.android.systemui.controlcenter.shade.ControlCenterCarrierText\$mCarrierTextCallback\$1"
+    private const val CARRIER_LAYOUT = "com.android.systemui.controlcenter.shade.MiuiCarrierTextLayout"
+    private const val HEADER_CONTROLLER = "com.android.systemui.controlcenter.shade.ControlCenterHeaderController"
 
-    /** 实时读取（不缓存）：用户切换模式后立即生效，不依赖进程重启。 */
-    val getOperator
-        get() = PrefsBridge.getStringAsInt("system_ui_control_center_hide_operator", 0)
+
+    val getOperator by lazy {
+        PrefsBridge.getStringAsInt("system_ui_control_center_hide_operator", 0)
+    }
 
     override fun init() {
+        if (isMoreHyperOSVersion(4f)) {
+            hookOS4()
+            return
+        }
         loadClass("com.android.systemui.statusbar.policy.HDController").findMethod { name("isVisible") }.createBeforeHook { param ->
                 param.result = false
             }
 
         hookLegacyCarrierText()
         hookModernCarrierText()
-        hookControllerSource()
-        hookForcedDisplay()
 
         when (getOperator) {
             1 -> hideCarrierSeparator()
@@ -60,121 +73,157 @@ object CustomCarrierText : BaseHook() {
         }
     }
 
+    // ROM calls and rollback can throw arbitrary runtime failures; preserve the host and cleanup boundary.
+    @Suppress("TooGenericExceptionCaught")
+    private fun hookOS4() {
+        val mode = PrefsBridge.getStringAsInt("system_ui_control_center_hide_operator", 0)
+        if (mode !in 1..3) return
+        val active = AtomicBoolean(false)
+        val handles = ArrayList<XposedInterface.HookHandle>()
+        try {
+            val callback = exactMethod(
+                requiredClass(CARRIER_CALLBACK),
+                CARRIER_TEXT_CHANGED, Int::class.java, String::class.java, Int::class.java
+            )
+            val layout = requiredClass(CARRIER_LAYOUT)
+            val additional: Method?
+            val views: List<java.lang.reflect.Field>
+            if (mode == 1) {
+                additional = exactMethod(layout, ON_MEASURE, Int::class.java, Int::class.java)
+                views = listOf(viewField(layout, "carrierSeparatorView"), viewField(layout, "carrierSeparatorText"))
+            } else if (mode == 2) {
+                val header = requiredClass(HEADER_CONTROLLER)
+                val privacy = "com.android.systemui.plugins.miui.statusbar.MiuiPrivacyController"
+                additional = exactMethod(header, "updateCarrierAndPrivacyVisible",
+                    requiredClass(privacy + "\$MiuiPromptInfo"), requiredClass(privacy + "\$AndroidPromptInfo"))
+                views = listOf(viewField(header, "carrierLayout"))
+            } else {
+                additional = null
+                views = emptyList()
+            }
+            handles.add(checkNotNull(hookMethod(callback, object : IMethodHook {
+                // ROM calls and rollback can throw arbitrary runtime failures; preserve the host and cleanup boundary.
+                @Suppress("TooGenericExceptionCaught")
+                override fun before(param: HookParam) {
+                    if (!active.get() || param.isSkipped) return
+                    try {
+                        // ROM contract: available carrier count, text, physical SIM slot. Never replace either int.
+                        val carrierCount = param.args[0] as? Int ?: return
+                        val text = param.args[1] as? String
+                        val slot = param.args[2] as? Int ?: return
+                        if (carrierCount !in 0..2 || slot !in 0..1) return
+                        if (mode != 3 && text.isNullOrEmpty()) return
+                        param.args[1] = when (mode) {
+                            1 -> text!!.replace("  |  ", "").replace(" | ", "")
+                            2 -> ""
+                            // Keep one fixed display slot even when only SIM2 is active. The
+                            // producer deduplicates each text using a shared carrier count.
+                            // A count-dependent display slot can miss the second callback.
+                            else -> if (carrierCount == 0) text else {
+                                val name = PropUtils.getProp("persist.private.device_name")
+                                if (name.isNullOrBlank()) text else if (slot == 0) name else ""
+                            }
+                        }
+                    } catch (error: RuntimeException) {
+                        debugCallbackError("OS4 carrier text", error)
+                    }
+                }
+            })))
+            if (additional != null) {
+                handles.add(checkNotNull(hookMethod(additional, object : IMethodHook {
+                    override fun after(param: HookParam) {
+                        if (!active.get() || param.hasThrowable) return
+                        try {
+                            // Preserve the ROM's full measurement/privacy/accessibility work.
+                            // INVISIBLE keeps its measured spacing; a GONE view stays GONE.
+                            for (field in views) {
+                                val view = field.get(param.thisObject) as? View ?: continue
+                                if (view.visibility == View.VISIBLE) view.visibility = View.INVISIBLE
+                            }
+                        } catch (error: ReflectiveOperationException) {
+                            debugCallbackError("OS4 carrier visibility", error)
+                        } catch (error: RuntimeException) {
+                            debugCallbackError("OS4 carrier visibility", error)
+                        }
+                    }
+                })))
+            }
+            active.set(true)
+        } catch (error: Exception) {
+            active.set(false)
+            for (handle in handles) {
+                try { handle.unhook() } catch (rollback: RuntimeException) { error.addSuppressed(rollback) }
+            }
+            throw IllegalStateException("OS4 carrier callback shape or registration unavailable", error)
+        }
+    }
+
+    private fun requiredClass(name: String): Class<*> =
+        findClassIfExists(name) ?: throw IllegalStateException("Missing OS4 carrier class: $name")
+
+    private fun exactMethod(owner: Class<*>, name: String, vararg args: Class<*>): Method =
+        owner.getDeclaredMethod(name, *args).also {
+            check(it.returnType == Void.TYPE && !Modifier.isStatic(it.modifiers))
+            it.isAccessible = true
+        }
+
+    private fun viewField(owner: Class<*>, name: String): java.lang.reflect.Field =
+        owner.getDeclaredField(name).also {
+            check(View::class.java.isAssignableFrom(it.type) && !Modifier.isStatic(it.modifiers))
+            it.isAccessible = true
+        }
+
     private fun hookLegacyCarrierText() {
         runCatching {
-            loadClass("com.android.systemui.statusbar.phone.MiuiKeyguardStatusBarView").findMethod { name("onCarrierTextChanged") }.createBeforeHook { param ->
-                    applyCarrierTextTransform(param.args)
+            loadClass("com.android.systemui.statusbar.phone.MiuiKeyguardStatusBarView").findMethod { name(CARRIER_TEXT_CHANGED) }.createBeforeHook { param ->
+                    param.args[2] = transformCarrierText(
+                        slotId = param.args[1] as Int,
+                        carrierText = param.args[2] as? String
+                    )
                 }
         }
     }
 
     // 显示设备名称
     private fun hookModernCarrierText() {
-        // 三参事件路径
         runCatching {
-            loadClass("com.android.systemui.controlcenter.shade.ControlCenterCarrierText" + 36.toChar() + "mCarrierTextCallback" + 36.toChar() + "1").findMethod { name("onCarrierTextChanged") }.createBeforeHook { param ->
-                    applyCarrierTextTransform(param.args)
-                }
-        }
-        // 二参初值/刷新路径：ICarrierTextListener.onCarrierTextChanged(I,String)V 的接口默认实现
-        // 为空（smali 实测 return-void）且实现类未覆写——不单独挂载则该链路整条绕过文本替换，
-        // 表现为「显示设备名称」模式不生效（模式 1/2 有独立 hook 兜底故不易察觉）。
-        runCatching {
-            loadClass("com.miui.interfaces.statusbar.ICarrierTextController" + 36.toChar() + "ICarrierTextListener")
-                .findMethod { name("onCarrierTextChanged"); parameterTypes(Int::class.java, String::class.java) }
-                .createBeforeHook { param ->
-                    applyCarrierTextTransform(param.args)
+            loadClass(CARRIER_CALLBACK).findMethod { name(CARRIER_TEXT_CHANGED) }.createBeforeHook { param ->
+                    param.args[2] = transformCarrierText(
+                        slotId = param.args[1] as Int,
+                        carrierText = param.args[2] as? String
+                    )
                 }
         }
     }
 
-    /**
-     * 显示真源：MiuiCarrierTextController 的 per-slot 文本字段（String[]，下标即 slotId）。
-     *
-     * smali 实测（系统界面 17.03.260226.r）：显示端 ControlCenterCarrierText 唯一文本入口是
-     * 三参回调，而主刷新 updateCarrierText() 只发二参通知（接口默认实现为空）——回调层替换
-     * 无法覆盖初值/刷新。故在字段层替换（updateCarrierText 的 StringBuilder 拼接输入即这些字段，
-     * 与旧链路 HideDelimiter 的成熟修法同源）。
-     */
-    private fun hookControllerSource() {
-        runCatching {
-            loadClass("com.android.systemui.statusbar.policy.MiuiCarrierTextController")
-                .findMethod { name("updateCarrierText") }
-                .createBeforeHook { param ->
-                    listOf("mCurrentCarrier", "mCustomCarrier", "mCarrier").forEach { field ->
-                        runCatching {
-                            val slots = param.thisObject.getObjectFieldAs<Array<String?>>(field)
-                            val out = CarrierTextTransform.transformAll(getOperator, slots, deviceName)
-                            for (i in slots.indices) slots[i] = out[i]
-                        }
-                    }
-                }
-        }
-    }
+    private fun transformCarrierText(slotId: Int, carrierText: String?): String? {
+        return when (getOperator) {
+            1 -> carrierText
+                ?.replace("  |  ", "")
+                ?.replace(" | ", "")
 
-    /**
-     * 覆盖式显示兜底：在初值渲染（onFinishInflate）与三参刷新回调之后强制覆写
-     * ControlCenterCarrierText 的 TextView 文本——系统无论何时 setText 都会被顶掉，
-     * 不依赖其文本设置点的内部实现（该点经三轮静态排查未定位，改为覆盖式）。
-     * 带插桩日志供真机对账。
-     */
-    private fun hookForcedDisplay() {
-        val apply: (Any?) -> Unit = { self -> applyForcedText(self) }
-        runCatching {
-            loadClass("com.android.systemui.controlcenter.shade.ControlCenterCarrierText")
-                .findMethod { name("onFinishInflate") }
-                .createAfterHook { param -> apply(param.thisObject) }
-        }
-        runCatching {
-            loadClass("com.android.systemui.controlcenter.shade.ControlCenterCarrierText" + 36.toChar() + "mCarrierTextCallback" + 36.toChar() + "1")
-                .findMethod { name("onCarrierTextChanged") }
-                .createAfterHook { param ->
-                    apply(param.thisObject.getObjectFieldAs<Any>("this" + 36.toChar() + "0"))
-                }
-        }
-    }
+            2 -> ""
+            3 -> if (slotId == 0) {
+                PropUtils.getProp("persist.private.device_name")
+            } else {
+                null
+            }
 
-    private fun applyForcedText(self: Any?) {
-        runCatching {
-            val slotId = self!!.callMethodAs<Int>("getSlotId")
-            val tv = self.callMethodAs<TextView>("getCarrierTextView")
-            val orig = tv.text?.toString()
-            val out = CarrierTextTransform.transform(getOperator, arrayOf(slotId, orig), deviceName)
-            tv.text = out ?: ""
-            XposedLog.d("CustomCarrierText", "forced slot=" + slotId + " mode=" + getOperator
-                + " [" + orig + "] -> [" + out + "]")
-        }.onFailure {
-            XposedLog.e("CustomCarrierText", "applyForcedText failed: " + it)
+            else -> carrierText
         }
-    }
-
-    private val deviceName by lazy { PropUtils.getProp("persist.private.device_name") }
-
-    /**
-     * 把变换结果写回 onCarrierTextChanged 回调参数。
-     *
-     * 实测签名（系统界面 17.03.260226.r）：onCarrierTextChanged(I Ljava/lang/String; I)V
-     * ——slotId 在 args[0]、运营商文本在 args[1]、status 在 args[2]。
-     * 旧代码按 (x, Int, String) 取 args[1]/args[2] 会在新签名上抛 ClassCastException 导致整个功能失效。
-     */
-    private fun applyCarrierTextTransform(args: Array<Any?>) {
-        CarrierTextTransform.applyTo(
-            args,
-            CarrierTextTransform.transform(getOperator, args, deviceName)
-        )
     }
 
     // 隐藏分割线
     private fun hideCarrierSeparator() {
-        loadClass("com.android.systemui.controlcenter.shade.MiuiCarrierTextLayout").findMethod { name("onMeasure"); parameterTypes(Int::class.java, Int::class.java) }.createBeforeHook { param ->
+        loadClass(CARRIER_LAYOUT).findMethod { name(ON_MEASURE); parameterTypes(Int::class.java, Int::class.java) }.createBeforeHook { param ->
                 val viewGroup = param.thisObject as ViewGroup
                 val widthMeasureSpec = param.args[0] as Int
                 val heightMeasureSpec = param.args[1] as Int
 
                 if (!viewGroup.isVisible) {
                     // super.onMeasure
-                    invokeSuperMethod(
-                        "onMeasure", viewGroup,
+                    com.sevtinge.hyperceiler.libhook.base.BaseHook.invokeSuperMethod(
+                        ON_MEASURE, viewGroup,
                         widthMeasureSpec,
                         heightMeasureSpec
                     )
@@ -198,11 +247,11 @@ object CustomCarrierText : BaseHook() {
                 }
 
                 // super.onMeasure
-            invokeSuperMethod(
-                "onMeasure", viewGroup,
-                View.MeasureSpec.makeMeasureSpec(availableWidth, View.MeasureSpec.EXACTLY),
-                heightMeasureSpec
-            )
+                com.sevtinge.hyperceiler.libhook.base.BaseHook.invokeSuperMethod(
+                    ON_MEASURE, viewGroup,
+                    View.MeasureSpec.makeMeasureSpec(availableWidth, View.MeasureSpec.EXACTLY),
+                    heightMeasureSpec
+                )
                 viewGroup.callMethod(
                     "setMeasuredDimension",
                     availableWidth,
@@ -215,7 +264,7 @@ object CustomCarrierText : BaseHook() {
 
     // 隐藏全部名称
     private fun hideCarrierText() {
-        loadClass("com.android.systemui.controlcenter.shade.ControlCenterHeaderController").findMethod { name("updateCarrierAndPrivacyVisible") }.createAfterHook { param ->
+        loadClass(HEADER_CONTROLLER).findMethod { name("updateCarrierAndPrivacyVisible") }.createAfterHook { param ->
                 param.thisObject.getObjectFieldAs<View>("carrierLayout").visibility = View.INVISIBLE
             }
     }

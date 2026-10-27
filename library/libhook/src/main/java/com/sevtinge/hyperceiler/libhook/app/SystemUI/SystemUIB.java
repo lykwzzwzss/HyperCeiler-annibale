@@ -42,6 +42,7 @@ import com.sevtinge.hyperceiler.libhook.rules.systemui.controlcenter.ShadeHeader
 import com.sevtinge.hyperceiler.libhook.rules.systemui.controlcenter.NotificationWeather;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.controlcenter.OldWeather;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.controlcenter.RedirectToNotificationChannelSetting;
+import com.sevtinge.hyperceiler.libhook.rules.systemui.controlcenter.RemoveNotifNumLimitOS4;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.controlcenter.UnimportantNotification;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.controlcenter.ZenModeFix;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.controlcenter.media3.AlwaysDark;
@@ -92,6 +93,7 @@ import com.sevtinge.hyperceiler.libhook.rules.systemui.statusbar.HideStatusBarBe
 import com.sevtinge.hyperceiler.libhook.rules.systemui.statusbar.clock.StatusBarClockNew;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.statusbar.battery.BatteryDetailIndicator;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.statusbar.icon.all.BatteryStyle;
+import com.sevtinge.hyperceiler.libhook.rules.systemui.statusbar.icon.all.DataSaverIconOS4;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.statusbar.icon.all.HideVoWiFiIcon;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.statusbar.icon.all.IconsFromSystemManager;
 import com.sevtinge.hyperceiler.libhook.rules.systemui.statusbar.icon.all.NotificationIconColumns;
@@ -143,6 +145,8 @@ public class SystemUIB extends BaseLoad {
 
         // 状态栏图标
         initHook(new StatusBarIcon(), true);
+        initHook(new DataSaverIconOS4(),
+            com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.isMoreHyperOSVersion(4f));
         initHook(new IconsFromSystemManager(), true);
         initHook(WifiStandard.INSTANCE, PrefsBridge.getStringAsInt("system_ui_status_bar_icon_wifi_standard", 0) > 0);
         initHook(WifiNetworkIndicator.INSTANCE, PrefsBridge.getBoolean("system_ui_status_bar_icon_wifi_network_indicator_new"));
@@ -194,6 +198,9 @@ public class SystemUIB extends BaseLoad {
         initHook(new NavigationCustom(), PrefsBridge.getBoolean("system_ui_navigation_custom"));
 
         // 控制与通知中心
+        initHook(new RemoveNotifNumLimitOS4(),
+            com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.isMoreHyperOSVersion(4f)
+                && PrefsBridge.getBoolean("system_ui_control_center_remove_notif_num_limit"));
         initHook(new QSColor(), PrefsBridge.getBoolean("system_ui_control_center_qs_open_color") || PrefsBridge.getBoolean("system_ui_control_center_qs_big_open_color"));
         initHook(OldWeather.INSTANCE, PrefsBridge.getBoolean("system_ui_control_center_show_weather"));
         initHook(new ShadeHeaderGradientBlur(), PrefsBridge.getBoolean("system_ui_shade_header_gradient_blur"));
@@ -241,7 +248,10 @@ public class SystemUIB extends BaseLoad {
         boolean pProgressIsland = PrefsBridge.getBoolean("system_ui_island_media_control_progress_on");
         boolean pAlwaysDark = PrefsBridge.getBoolean("system_ui_control_center_media_control_always_dark");
         initHook(NewUnlockCustomActions.INSTANCE, pUnlockActions);
-        initHook(MediaControlBgFactory.INSTANCE, ncBgMode != 0 || diBgMode != 0);
+        // OS4 resolves its typed Monet palettes in CustomBackgroundOS4; the
+        // legacy factory expects the removed Style enum and OS3 controllers.
+        initHook(MediaControlBgFactory.INSTANCE, (ncBgMode != 0 || diBgMode != 0)
+            && !com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.isMoreHyperOSVersion(4f));
         initHook(CustomBackground.INSTANCE, ncBgMode != 0 || diBgMode != 0);
         initHook(MediaViewLayout.INSTANCE, pLayout || pLayoutIsland);
         initHook(MediaViewSize.INSTANCE, pSize || pSizeIsland);

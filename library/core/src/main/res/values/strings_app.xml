@@ -1080,6 +1080,11 @@
     <string name="theme_manager_diable_ads_desc">Replace \"guess what you like\" ads with blank cards, and remove the rest of the ads completely.</string>
     <string name="theme_manager_allow_download_more">Allow more downloads without logging in</string>
     <string name="theme_manager_allow_download_more_desc">Allow downloading more than 10 items without logging in</string>
+    <string name="theme_manager_ringtone_picker">Ringtone picker</string>
+    <string name="theme_manager_ringtone_picker_desc">Choose what opens for \"Local music\" when picking a local ringtone. The system file picker requires com.google.android.documentsui.</string>
+    <string name="theme_manager_ringtone_picker_off">Disabled</string>
+    <string name="theme_manager_ringtone_picker_file_browser">File manager</string>
+    <string name="theme_manager_ringtone_picker_documents_ui">System file picker</string>
     <!--remotecontroller-->
     <string name="remotecontroller">Mi Remote</string>
     <string name="remotecontroller_disable_ad">Disable ads</string>
@@ -1233,10 +1238,11 @@
     <string name="home_gesture_multi_choose_app_none">None</string>
     <string name="home_layout">Layout</string>
     <string name="home_layout_home_title">Home screen</string>
-    <string name="home_layout_indicator_title">Indicator</string>
-    <string name="home_layout_indicator_margin_bottom_desc">Indicator distance from screen bottom margin</string>
+    <string name="home_layout_indicator_title">Desktop search</string>
+    <string name="home_layout_indicator_margin_bottom_desc">Adjust the distance between desktop search and the bottom of the screen.</string>
     <string name="home_layout_hotseats_title">Dock</string>
     <string name="home_layout_searchbar_title">Search bar</string>
+    <string name="home_layout_searchbar_os4_hint">On OS4, adjust the search capsule under Layout → Desktop search.</string>
     <string name="home_layout_searchbar_width">Height</string>
     <string name="home_layout_seek_points">Page indicator</string>
     <string name="home_layout_unlock_grids">Unlock layout</string>
@@ -1311,6 +1317,8 @@
     <string name="home_drawer_blur_desc">Please set App drawer background transparency to 100% to use this feature</string>
     <string name="home_drawer_pinyin">Arrange in Pinyin order</string>
     <string name="home_drawer_pinyin_more">When the language isn\'t Simplified Chinese, the apps in the drawer will still arrange according to Pinyin.</string>
+    <string name="home_drawer_hide_all_apps_title">Hide the drawer\'s \"All apps\" title</string>
+    <string name="home_drawer_hide_all_apps_title_more">Removes the \"All apps\" text at the top of the app drawer. HyperOS 4 Flutter launcher only.</string>
     <string name="home_title">Icon and title</string>
     <string name="home_title_icon_title">Icon</string>
     <string name="home_title_icon_animation_title">Icon animation</string>
@@ -1346,6 +1354,7 @@
     <string name="home_title_notif_color">Notification dot background color customize</string>
     <string name="home_title_notif_color_picker">Custom color</string>
     <string name="home_title_icon_size">Icon size</string>
+    <string name="home_title_icon_size_moved">From HyperOS 4 on the icon size is adjusted under Layout → Icon scale. Please change it there.</string>
     <string name="home_recent">Recents</string>
     <string name="home_recent_animation_speed">Animation speed</string>
     <string name="home_recent_unlock_pin">Unlock pinned apps</string>
@@ -1386,6 +1395,24 @@
     <string name="home_widget_resizable">Remove any widget size limitations</string>
     <string name="home_widget_widget_blur_opt">Optimize widget blur</string>
     <string name="home_dock">Dock</string>
+    <string name="home_animation">Animation &amp; effects</string>
+    <string name="home_animation_open_category">App open &amp; close animations</string>
+    <string name="home_animation_open_rate_enable">Custom duration</string>
+    <string name="home_animation_open_rate_enable_desc">Override the duration of app open/close transitions</string>
+    <string name="home_animation_recents_category">Recents &amp; gesture animations</string>
+    <string name="home_animation_recents_enable">Custom duration</string>
+    <string name="home_animation_recents_enable_desc">Override the duration of recents, swipe-up and other desktop animations</string>
+    <string name="home_animation_open_rate_desc">30%–200%; below 100% speeds animations up, above 100% slows them down</string>
+    <string name="home_animation_open_rate">Duration ratio</string>
+    <string name="home_dock_unlock_style">Dock unlock fly-in animation</string>
+    <string name="home_dock_unlock_style_daybreak">Rise and settle</string>
+    <string name="home_dock_unlock_style_depth_flip">Arrive from depth</string>
+    <string name="home_dock_unlock_style_gale">Park out to the right</string>
+    <string name="home_dock_unlock_style_orbit_sweep">Enter diagonally</string>
+    <string name="home_dock_unlock_style_ripple">Calm and composed</string>
+    <string name="home_dock_unlock_style_perspective_fold">Perspective fold</string>
+    <string name="home_dock_unlock_style_capsule_fission">Elastic deformation</string>
+    <string name="home_dock_unlock_style_auto_aim">Gravitational potential</string>
     <string name="home_dock_bg_enable">Add background blur to dock</string>
     <string name="home_dock_bg_all_app">Drawer mode compatible</string>
     <string name="home_dock_bg_all_app_more">Turning on prevents the dock from being truncated, but the dock height is limited.</string>
@@ -1437,6 +1464,8 @@
     <string name="home_other_mi_pad_enable_more_setting_desc">The unlocked features may not be available, and some features require support from the underlying system.</string>
     <string name="home_other_disable_prestart">Disable app preload</string>
     <string name="home_other_opt_app_launch_delay">Optimize app launch delay</string>
+    <string name="home_is_rust_tips">If changes made to the parameters on the current screen do not take effect after restarting the app, please restart your device.</string>
+    <string name="home_is_rust_no_support">The current version of LSPosed does not support HyperOS Runtime hooks. Please try updating LSPosed and then try again.</string>
     <!--Gallery Editor-->
     <string name="mediaeditor">Gallery Editor</string>
     <string name="mediaeditor_foundation">Basic</string>
@@ -1595,10 +1624,14 @@
     <string name="security_center_unlock_screen_time_desc">Show screen power usage information at the top of the battery section and resume showing power consumption and time for all other apps.</string>
     <string name="security_center_unlock_gun_service">Unlock Gun sight service</string>
     <string name="security_center_remove_game_toast">Remove Game Turbo pop-up window</string>
+    <string name="security_center_game_dock_light_background">Light background for sidebar in light mode</string>
+    <string name="security_center_game_dock_light_background_desc">In light mode, make the game sidebar (shortcut apps) and function section use the same light background as the all-apps drawer</string>
     <string name="security_center_disable_remove_screen_hold_on">Disable media removal from the Lock screen</string>
     <string name="security_center_unlock_memc">Unlock MEMC</string>
     <string name="security_center_unlock_enhance_contours">Unlock Enhanced contours</string>
     <string name="security_center_unlock_s_resolution">Unlock Super resolution</string>
+    <string name="security_center_remove_vb_temp_limit">Remove image enhancement temperature limit</string>
+    <string name="security_center_remove_vb_temp_limit_summary">When the temperature is too high, features such as “Ultra HD Playback” and “Video Quality Enhancement” will no longer be automatically disabled. Continuing to use these features when the temperature is too high may cause the device to overheat severely. This software assumes no liability, meow.</string>
     <string name="security_center_hide_sidebar">Hide sidebar</string>
     <string name="security_center_leave_open">Leave the slide unfolded</string>
     <string name="security_center_sidebar_show_suggest">Disable show suggest apps</string>
@@ -1649,6 +1682,7 @@
     <string name="barrage_global_enable">Allow global use of barrage notifications</string>
     <string name="barrage_not_touchable">Barrage notification not touchable</string>
     <string name="barrage_custom_barrage_length">Custom barrage notification length</string>
+    <string name="barrage_custom_barrage_length_desc">Maximum displayed text length before the ellipsis. Default keeps the system limit. Some emoji use multiple length units. Restart Barrage after changing.</string>
     <!--Joyose-->
     <string name="joyose">Joyose</string>
     <string name="joyose_cloud_control_title">Cloud control</string>
@@ -1854,4 +1888,21 @@
     <string name="system_framework_disable_thermal_brightness_cap_desc">Android 17 / HyperOS 4: ignores software thermal brightness caps. May increase heat and battery use. Restart the phone after changing.</string>
     <string name="system_ui_face_island_unlock">Lock screen face island</string>
     <string name="system_ui_face_island_unlock_desc">Show the face unlock animation as a Dynamic Island. Only for REDMI K90 / HyperOS 4; restart SystemUI after changing.</string>
+    <string name="home_layout_experimental_title">Experimental</string>
+    <string name="home_layout_pad_grid_title">Tablet grid</string>
+    <string name="home_layout_pad_grid_desc">Rewrite the tablet layout grid; no effect on phones</string>
+    <string name="home_layout_pad_major_title">Tablet long side</string>
+    <string name="home_layout_pad_minor_title">Tablet short side</string>
+    <string name="home_layout_fold_grid_title">Foldable grid</string>
+    <string name="home_layout_fold_grid_desc">Rewrite the foldable layout grid; no effect on phones</string>
+    <string name="home_layout_fold_major_title">Foldable long side</string>
+    <string name="home_layout_fold_minor_title">Foldable short side</string>
+    <string name="home_layout_icon_scale_title">Icon scale</string>
+    <string name="home_layout_icon_scale_desc">Icon size levels: 70 is the system default size, drag right to enlarge and left to shrink</string>
+    <string name="home_layout_recents_hide_clear_title">Hide the recents clear button</string>
+    <string name="home_layout_recents_hide_clear_desc">Hides the button but keeps its function</string>
+    <string name="home_layout_recents_no_clear_title">Disable the recents clear button</string>
+    <string name="home_layout_recents_no_clear_desc">Removes the button and what it does</string>
+    <string name="home_layout_folder_cols_title">Folder columns</string>
+    <string name="home_layout_folder_cols_desc">Uses the folder column count from the folder settings page</string>
 </resources>

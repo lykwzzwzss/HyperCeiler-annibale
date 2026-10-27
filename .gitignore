@@ -17,3 +17,10 @@ signing.properties
 /.kotlin
 /library/hook
 .reasonix
+__pycache__/
+*.apk
+/handover/
+/.workbuddy/
+decompiled
+scope-apks
+.rivet*

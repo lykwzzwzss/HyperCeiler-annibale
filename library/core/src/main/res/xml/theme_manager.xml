@@ -39,6 +39,14 @@
             android:defaultValue="false" />
 
         <fan.preference.DropDownPreference
+            android:title="@string/theme_manager_ringtone_picker"
+            android:summary="@string/theme_manager_ringtone_picker_desc"
+            android:key="prefs_key_theme_manager_ringtone_picker_mode"
+            android:defaultValue="0"
+            app:entries="@array/theme_manager_ringtone_picker_mode"
+            app:entryValues="@array/theme_manager_ringtone_picker_mode_value" />
+
+        <fan.preference.DropDownPreference
             android:key="prefs_key_theme_manager_new_version_code_modify"
             android:summary="@string/theme_manager_version_code_modify_desc"
             android:title="@string/theme_manager_version_code_modify"

@@ -36,7 +36,7 @@ public class DeviceNameCard extends FrameLayout implements View.OnClickListener 
         mDeviceNameText = findViewById(R.id.summary);
         if (mDeviceNameText != null && LargeFontUtils.isLargeFontLevel(getContext())) {
             mDeviceNameText.setMaxLines(2);
-            if (ViewCompat.getLayoutDirection(mDeviceNameText) == ViewCompat.LAYOUT_DIRECTION_RTL) {
+            if (mDeviceNameText.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
                 mDeviceNameText.setGravity(8388613);
             } else {
                 mDeviceNameText.setGravity(0);

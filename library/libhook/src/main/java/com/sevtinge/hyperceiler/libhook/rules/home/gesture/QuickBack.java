@@ -199,7 +199,7 @@ public class QuickBack extends BaseHook {
         for (int i = 0; i < stackTasks.size() - 1; i++) {
             Object task = stackTasks.get(i);
             int taskId = (int) getObjectField(getObjectField(task, "key"), "id");
-            if (taskId == runningTask.id) {
+            if (taskId == runningTask.taskId) {
                 return stackTasks.get(i + 1);
             }
         }

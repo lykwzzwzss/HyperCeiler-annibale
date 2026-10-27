@@ -20,12 +20,16 @@ package com.sevtinge.hyperceiler.hooker;
 
 import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.Miui.isPad;
 
+import android.os.Bundle;
+
 import androidx.preference.EditTextPreference;
 import androidx.preference.SwitchPreference;
 
 import com.sevtinge.hyperceiler.core.R;
 import com.sevtinge.hyperceiler.dashboard.DashboardFragment;
-import com.sevtinge.hyperceiler.libhook.rules.getapps.DeviceModifyModePolicy;
+
+import com.sevtinge.hyperceiler.common.utils.GetAppsDeviceConfig;
+import com.sevtinge.hyperceiler.common.utils.PrefsBridge;
 
 public class GetAppsFragment extends DashboardFragment {
 
@@ -33,11 +37,16 @@ public class GetAppsFragment extends DashboardFragment {
     EditTextPreference mDevice;
     EditTextPreference mManufacturer;
     SwitchPreference mRiskCheck;
-    SwitchPreference mDeviceModify;
 
     @Override
     public int getPreferenceScreenResId() {
         return R.xml.getapps;
+    }
+
+    @Override
+    public void onCreatePreferencesBefore(Bundle savedInstanceState, String rootKey) {
+        GetAppsDeviceConfig.prepareUi(PrefsBridge.getAll()).forEach(PrefsBridge::putByApp);
+        super.onCreatePreferencesBefore(savedInstanceState, rootKey);
     }
 
     @Override
@@ -46,28 +55,15 @@ public class GetAppsFragment extends DashboardFragment {
         mModel = findPreference("prefs_key_market_device_modify_model");
         mManufacturer = findPreference("prefs_key_market_device_modify_manufacturer");
         mRiskCheck = findPreference("prefs_key_market_bypass_risk_check");
-        mDeviceModify = findPreference("prefs_key_market_device_modify_new1");
 
         if (isPad()) {
             setFuncHint(mRiskCheck, 1);
         }
 
-        int configuredMode = DeviceModifyModePolicy.resolveConfiguredMode(getSharedPreferences().getAll());
-        boolean enabled = configuredMode != 0;
-        mDeviceModify.setPersistent(false);
-        mDeviceModify.setChecked(enabled);
-        mDeviceModify.setPersistent(true);
-        // Legacy preset modes stay enabled; only mode 1 uses the custom text fields.
-        setCustomFieldsVisible(configuredMode == 1);
-        mDeviceModify.setOnPreferenceChangeListener((preference, value) -> {
-            setCustomFieldsVisible((Boolean) value);
-            return true;
-        });
-    }
-
-    private void setCustomFieldsVisible(boolean visible) {
-        mDevice.setVisible(visible);
-        mModel.setVisible(visible);
-        mManufacturer.setVisible(visible);
+        // The XML dependency follows the Boolean switch; never hide custom fields
+        // behind the obsolete enumerated preference.
+        mDevice.setVisible(true);
+        mModel.setVisible(true);
+        mManufacturer.setVisible(true);
     }
 }
