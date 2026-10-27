@@ -120,6 +120,25 @@ public final class AppSettingsStore {
         syncIntIfPresent(context, allPrefs, PREF_APP_LANGUAGE, KEY_APP_LANGUAGE, 0);
     }
 
+    /** Mirrors removals too, so global values cannot override a deleted preference. */
+    public static void syncGlobalAfterChanges(@Nullable Context context, Map<String, ?> changes) {
+        syncGlobalFromPrefs(context);
+        for (Map.Entry<String, ?> entry : changes.entrySet()) {
+            if (entry.getValue() != null) continue;
+            String globalKey = switch (entry.getKey()) {
+                case PREF_HIDE_APP_ICON -> KEY_HIDE_APP_ICON;
+                case PREF_FLOAT_NAV -> KEY_FLOAT_NAV;
+                case PREF_SCOPE_SYNC -> KEY_SCOPE_SYNC;
+                case PREF_ICON -> KEY_ICON;
+                case PREF_ICON_MODE -> KEY_ICON_MODE;
+                case PREF_APP_LANGUAGE -> KEY_APP_LANGUAGE;
+                default -> null;
+            };
+            // Empty global values make all getters fall back to preference defaults.
+            if (globalKey != null) putGlobalString(context, globalKey, "");
+        }
+    }
+
     public static void resetGlobalToDefaults(@Nullable Context context) {
         putGlobalString(context, KEY_HIDE_APP_ICON, Boolean.toString(true));
         putGlobalString(context, KEY_FLOAT_NAV, Boolean.toString(false));

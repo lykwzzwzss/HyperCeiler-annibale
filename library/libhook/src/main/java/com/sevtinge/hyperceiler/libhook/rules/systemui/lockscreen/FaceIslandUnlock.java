@@ -135,6 +135,13 @@ public class FaceIslandUnlock extends BaseHook {
                 public void before(HookParam param) {
                     FaceIslandBridge.onHide(param.getThisObject());
                 }
+
+                @Override
+                public void after(HookParam param) {
+                    // handleHide commits mHiding; refresh now instead of waiting for
+                    // the heartbeat or the end of the desktop transition.
+                    FaceIslandBridge.onKeyguardState(param.getThisObject());
+                }
             });
             hook(mediator, "handleCancelKeyguardExitAnimation", 0, new IMethodHook() {
                 @Override

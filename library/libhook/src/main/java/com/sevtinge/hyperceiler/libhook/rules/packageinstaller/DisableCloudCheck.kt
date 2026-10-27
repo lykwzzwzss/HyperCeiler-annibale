@@ -19,94 +19,68 @@
 package com.sevtinge.hyperceiler.libhook.rules.packageinstaller
 
 import android.content.Context
+import com.sevtinge.hyperceiler.common.log.XposedLog
 import com.sevtinge.hyperceiler.libhook.base.BaseHook
 import io.github.lingqiqi5211.ezhooktool.xposed.java.IMethodHook
-import com.sevtinge.hyperceiler.libhook.utils.hookapi.dexkit.DexKit
 import io.github.lingqiqi5211.ezhooktool.xposed.common.HookParam
-import io.github.lingqiqi5211.ezhooktool.xposed.dsl.createHook
 import java.lang.reflect.Method
 
 object DisableCloudCheck : BaseHook() {
-
     override fun useDexKit() = true
 
+    private lateinit var fetch: Method
+
     override fun initDexKit(): Boolean {
-        method1
-        method2
-        return true
-    }
-
-    private val method1 by lazy<Method> {
-        requiredMember("NoNetworkInstallBtn") {
-            it.findMethod {
-                matcher {
-                    usingStrings("install_btn")
-                    usingNumbers(16)
-                }
-            }.single()
-        }
-    }
-
-    private val method2 by lazy<Method> {
-        requiredMember("NormalInstallBtn") {
-            it.findMethod {
-                matcher {
-                    usingStrings("getString(if (shouldUseU…e R.string.start_install)")
-                }
-            }.single()
-        }
-    }
-
-    override fun init() {
-        // 签名对应：public final java.lang.Object c(Context, g, int, ApkInfo, HashMap, Continuation)
-        val methods = DexKit.findMemberList<Method>("DisableCloudCheck_Fetch") {
+        // AppMarket.syncSearch (C0644e.c) on installer 5.5.5.0.0-20260821.
+        // The old NormalInstallBtn string was removed; requiring it disabled
+        // this entire hook before the cloud request could be intercepted.
+        fetch = requiredMember("CloudCheckFetchV2") {
             it.findMethod {
                 matcher {
                     paramCount = 6
                     paramTypes(
-                        Context::class.java.name,
-                        "",
-                        Int::class.javaPrimitiveType?.name ?: "int",
-                        "com.miui.packageInstaller.model.ApkInfo",
-                        HashMap::class.java.name,
-                        "kotlin.coroutines.Continuation"
+                        Context::class.java,
+                        findClass("com.miui.packageInstaller.CallingPackage"),
+                        Int::class.javaPrimitiveType,
+                        findClass("com.miui.packageInstaller.model.ApkInfo"),
+                        HashMap::class.java,
+                        null
                     )
-                    returnType = Any::class.java.name
+                    returnType(Object::class.java)
+                    usingStrings("sourceAppName", "localVersionCode")
                 }
-            }
+            }.single()
         }
+        return true
+    }
 
-        hookMethod(method1, object : IMethodHook {
+    override fun init() {
+        val params = findClass("com.miui.packageInstaller.model.CloudParams")
+        val success = findClass("com.miui.packageInstaller.model.CloudResult\$Success")
+        val paramsConstructor = params.getDeclaredConstructor().apply { isAccessible = true }
+        val successConstructor = success.getDeclaredConstructor(params).apply { isAccessible = true }
+        hookMethod(fetch, object : IMethodHook {
             override fun before(param: HookParam) {
-                callMethod(param.thisObject, method2.name, param.args[0])
-                param.result = null
+                // Preserve the installer's successful result type and let its
+                // normal downstream state machine handle this empty response.
+                try {
+                    val emptyParams = paramsConstructor.newInstance()
+                    // CloudParams defaults both flags to true; retain neither
+                    // pre-install nor post-install ads when the cloud payload is skipped.
+                    params.getField("showAdsBefore").set(emptyParams, false)
+                    params.getField("showAdsAfter").set(emptyParams, false)
+                    param.result = successConstructor.newInstance(emptyParams)
+                } catch (t: Throwable) {
+                    // Leave the original cloud request in place if the response
+                    // model changes on a future installer build.
+                    XposedLog.e(
+                        TAG,
+                        "com.miui.packageinstaller",
+                        "Could not create an empty CloudResult.Success",
+                        t
+                    )
+                }
             }
         })
-
-        methods.forEach { method ->
-            try {
-                method.createHook {
-                    replace { param ->
-                        try {
-                            val cloudParamsClass = findClass("com.miui.packageInstaller.model.CloudParams")
-                            val cloudParamsInstance = cloudParamsClass.newInstance()
-
-                            val successClass = findClass("com.miui.packageInstaller.model.CloudResult\$Success")
-                            val successConstructor = successClass.getDeclaredConstructor(cloudParamsClass)
-
-                            successConstructor.newInstance(cloudParamsInstance)
-                        } catch (e: Exception) {
-                            invokeOriginalMethod(
-                                param.executable as Method,
-                                param.thisObject,
-                                param.args
-                            )
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                // ignore
-            }
-        }
     }
 }

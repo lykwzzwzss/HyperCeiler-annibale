@@ -21,7 +21,12 @@ val gitBranch: String by lazy {
     val branch = runGitCommand("branch", "--show-current") ?: "unknown"
     """github\.com[:/](.+?)(\.git)?$""".toRegex().find(url)?.groupValues?.get(1).orEmpty() + "/" + branch
 }
-val gitVersionCode: Int by lazy { 5 + gitCommitCount }
+val gitVersionCode: Int by lazy {
+    val generated = 5 + gitCommitCount
+    providers.gradleProperty("versionCodeOverride").orNull?.toInt()?.also {
+        require(it >= generated) { "versionCodeOverride must be at least $generated" }
+    } ?: generated
+}
 
 fun runGitCommand(vararg args: String): String? = runCatching {
     ProcessBuilder(listOf("git") + args)
@@ -193,6 +198,7 @@ java {
 kotlin.jvmToolchain(25)
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
     implementation(libs.viewpager2)
     implementation(libs.expansion)
     implementation(projects.library.core)

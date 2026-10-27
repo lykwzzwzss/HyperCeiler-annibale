@@ -25,8 +25,12 @@ import com.sevtinge.hyperceiler.common.utils.PrefsBridge;
 import com.sevtinge.hyperceiler.libhook.base.BaseLoad;
 import com.sevtinge.hyperceiler.libhook.rules.packageinstaller.AllAsSystemApp;
 import com.sevtinge.hyperceiler.libhook.rules.packageinstaller.DisableAd;
+import com.sevtinge.hyperceiler.libhook.rules.packageinstaller.DisableAnonymousSourceWarning;
+import com.sevtinge.hyperceiler.libhook.rules.packageinstaller.DisableDefaultSafetyReminder;
+import com.sevtinge.hyperceiler.libhook.rules.packageinstaller.DisableInstallCancelRecommendation;
 import com.sevtinge.hyperceiler.libhook.rules.packageinstaller.DisableAppInfoUpload;
 import com.sevtinge.hyperceiler.libhook.rules.packageinstaller.DisableCloudCheck;
+import com.sevtinge.hyperceiler.libhook.rules.packageinstaller.DisableOfflineInstallWarning;
 import com.sevtinge.hyperceiler.libhook.rules.packageinstaller.DisableCountChecking;
 import com.sevtinge.hyperceiler.libhook.rules.packageinstaller.DisableInstallerFullSafeVersion;
 import com.sevtinge.hyperceiler.libhook.rules.packageinstaller.DisableSafeModelTip;
@@ -45,15 +49,21 @@ public class PackageInstaller extends BaseLoad {
 
         // 禁用广告
         initHook(new DisableAd(), PrefsBridge.getBoolean("miui_package_installer_disable_ad"));
+        initHook(DisableInstallCancelRecommendation.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_disable_ad"));
 
         // 禁用风险检测
         initHook(InstallRiskDisable.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_install_risk"));
+        initHook(DisableAnonymousSourceWarning.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_install_risk"));
 
         // 阻断云端配置下发
         initHook(DisableCloudCheck.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_disable_cloud_check"));
+        // Offline risk dialog is a separate installer path from SafeModeTipViewObject.
+        initHook(DisableOfflineInstallWarning.INSTANCE,
+            PrefsBridge.getBoolean("miui_package_installer_disable_cloud_check"));
 
         // 禁用安全守护提示
         initHook(DisableSafeModelTip.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_safe_model_tip"));
+        initHook(DisableDefaultSafetyReminder.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_safe_model_tip"));
 
         // 允许更新系统应用
         initHook(AllAsSystemApp.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_update_system_app"));

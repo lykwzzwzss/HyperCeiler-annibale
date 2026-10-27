@@ -32,7 +32,8 @@ public class PrefsBridge {
     private static SharedPreferences mPhysicalPrefs;
     private static Context mAppContext;
     // Hook 进程远程存储句柄（来自 LSPosed service）
-    private static SharedPreferences mRemotePrefs;
+    private static volatile SharedPreferences mRemotePrefs;
+    private static volatile boolean sRemoteCommitFailed;
     private static boolean isHookProcess = false;
 
     /**
@@ -67,8 +68,9 @@ public class PrefsBridge {
      * 绑定服务后的注入：在 Application.onServiceBind 中调用
      * 确保激活状态下，App 端的修改能推送到远程
      */
-    public static void setRemotePrefs(SharedPreferences remote) {
+    public static synchronized void setRemotePrefs(SharedPreferences remote) {
         mRemotePrefs = remote;
+        sRemoteCommitFailed = false;
         if (remote != null) {
             syncPhysicalToRemote();
         }
@@ -169,7 +171,7 @@ public class PrefsBridge {
      * 应用进程写入入口：先更新本地，再同步到远程。
      * Hook 进程调用会被忽略并输出警告。
      */
-    public static void putByApp(String key, Object value) {
+    public static synchronized void putByApp(String key, Object value) {
         String rKey = wrap(key);
         if (warnAndSkipIfHookWrite("put", rKey)) return;
         PrefType prefType = resolvePrefType(rKey, value);
@@ -198,7 +200,7 @@ public class PrefsBridge {
     /**
      * 移除特定配置项
      */
-    public static void removeByApp(String key) {
+    public static synchronized void removeByApp(String key) {
         String rKey = wrap(key);
         if (warnAndSkipIfHookWrite("remove", rKey)) return;
         PrefType prefType = resolvePrefType(rKey, null);
@@ -344,6 +346,54 @@ public class PrefsBridge {
         return new HashMap<>();
     }
 
+    public static boolean isRemoteBound() {
+        return mRemotePrefs != null;
+    }
+
+    public static synchronized boolean areRemotePrefsSynced() {
+        if (mPhysicalPrefs == null || mRemotePrefs == null || sRemoteCommitFailed) return false;
+        try {
+            return mPhysicalPrefs.getAll().equals(mRemotePrefs.getAll());
+        } catch (RuntimeException e) {
+            AndroidLog.w(TAG, "Could not verify remote preferences.", e);
+            return false;
+        }
+    }
+
+    /** One local commit for a prevalidated batch; null values remove individual keys. */
+    public static synchronized boolean applyByApp(Map<String, ?> changes) {
+        if (warnAndSkipIfHookWrite("apply", PREFS_NAME) || mPhysicalPrefs == null) return false;
+        // Validate the whole batch before editing either store.
+        for (Map.Entry<String, ?> entry : changes.entrySet()) {
+            Object value = entry.getValue();
+            if (entry.getKey() == null || !(value == null || value instanceof Boolean
+                || value instanceof String || value instanceof Integer || value instanceof Long
+                || value instanceof Float || value instanceof Set<?>)) {
+                throw new IllegalArgumentException("Unsupported preference value");
+            }
+            if (value instanceof Set<?> set && set.stream().anyMatch(item -> !(item instanceof String))) {
+                throw new IllegalArgumentException("Preference sets must contain strings");
+            }
+        }
+        Map<String, ?> previous = mPhysicalPrefs.getAll();
+        SharedPreferences.Editor local = mPhysicalPrefs.edit();
+        changes.forEach((key, value) -> performPut(local, wrap(key), value));
+        if (!commitEditor(local, "physical", "apply preferences")) return false;
+        if (mRemotePrefs != null) {
+            try {
+                SharedPreferences.Editor remote = mRemotePrefs.edit();
+                changes.forEach((key, value) -> performPut(remote, wrap(key), value));
+                commitEditor(remote, "remote", "apply preferences");
+            } catch (RuntimeException e) {
+                sRemoteCommitFailed = true;
+                AndroidLog.w(TAG, "Batch saved locally, but remote update failed.", e);
+            }
+        }
+        changes.forEach((key, value) -> notifyPrefChanged(wrap(key),
+            resolvePrefType(value != null ? value : previous.get(wrap(key)))));
+        return true;
+    }
+
 
     // --- 内部维护工具 ---
 
@@ -430,7 +480,7 @@ public class PrefsBridge {
     /**
      * 一键重置：清空所有本地与远程数据
      */
-    public static void clearAllByApp() {
+    public static synchronized void clearAllByApp() {
         if (warnAndSkipIfHookWrite("clearAll", PREFS_NAME)) return;
         Map<String, ?> localEntries = new HashMap<>(getAll());
         if (!commitClear(mPhysicalPrefs, "physical")) {
@@ -533,16 +583,15 @@ public class PrefsBridge {
     }
 
     private static boolean commitEditor(SharedPreferences.Editor editor, String source, String action) {
+        boolean saved = false;
         try {
-            if (editor.commit()) {
-                return true;
-            }
+            saved = editor.commit();
         } catch (RuntimeException e) {
             AndroidLog.w(TAG, "Failed to " + action + " on " + source + " prefs.", e);
-            return false;
         }
-        AndroidLog.w(TAG, "Failed to " + action + " on " + source + " prefs.");
-        return false;
+        if ("remote".equals(source)) sRemoteCommitFailed = !saved;
+        if (!saved) AndroidLog.w(TAG, "Failed to " + action + " on " + source + " prefs.");
+        return saved;
     }
 
     private static void notifyPrefChanged(String key, @Nullable PrefType prefType) {

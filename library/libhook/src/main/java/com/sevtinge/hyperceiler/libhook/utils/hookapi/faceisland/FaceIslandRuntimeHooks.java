@@ -33,6 +33,7 @@ import io.github.lingqiqi5211.ezhooktool.xposed.java.IMethodHook;
 final class FaceIslandRuntimeHooks {
     private static Object controller;
     private static XposedInterface.HookHandle exitHandle;
+    private static XposedInterface.HookHandle dismissHandle;
 
     static void install(ClassLoader loader) throws Exception {
         Class<?> type = Class.forName("com.android.systemui.faceisland.FaceIslandController", true, loader);
@@ -42,11 +43,12 @@ final class FaceIslandRuntimeHooks {
         Object instance = field(type, "INSTANCE").get(null);
         // Validate the complete adapter contract before installing anything.
         for (String name : new String[]{"state", "publishedReal", "data", "context", "nextExitToken",
-                "exitBridge", "exitToken", "main", "heartbeat"}) field(type, name);
+                "exitBridge", "exitToken", "main", "heartbeat", "showing", "asleep", "mediator"}) field(type, name);
         field(field(type, "state").get(instance).getClass(), "active");
         method(type, "cleanup", String.class);
         Method cancel = method(type, "cancelSleepExit");
         Method target = method(type, "beginSleepExit");
+        Method syncSystem = method(type, "syncSystem", long.class);
         controller = instance;
         exitHandle = BaseHook.hookMethod(target, new IMethodHook() {
             @Override public void before(HookParam param) {
@@ -75,11 +77,38 @@ final class FaceIslandRuntimeHooks {
             }
         });
         if (exitHandle == null) throw new IllegalStateException("Exit adapter hook failed");
+        dismissHandle = BaseHook.hookMethod(syncSystem, new IMethodHook() {
+            @Override public void after(HookParam param) {
+                Object self = param.getThisObject();
+                try {
+                    // mHiding is set only once dismissal is committed, before the desktop
+                    // transition. Face acceptance or an unfinished swipe does not set it.
+                    // Run before updatePresentation, bypassing the dex's closeAtMs hold.
+                    if (field(type, "asleep").getBoolean(self)) return;
+                    Object mediator = get(self, "mediator");
+                    boolean hiding = mediator != null
+                        && field(mediator.getClass(), "mHiding").getBoolean(mediator);
+                    if (field(type, "showing").getBoolean(self) && !hiding) return;
+                    Object state = get(self, "state");
+                    if (field(state.getClass(), "active").getBoolean(state)
+                            || get(self, "data") != null) {
+                        method(type, "cleanup", String.class).invoke(self, "KEYGUARD_DISMISSED");
+                    }
+                } catch (Throwable t) {
+                    XposedLog.w("FaceIslandExit", "dismiss cleanup failed", t);
+                }
+            }
+        });
+        if (dismissHandle == null) throw new IllegalStateException("Dismiss adapter hook failed");
     }
 
     static void retire() {
         Object old = controller;
         controller = null;
+        if (dismissHandle != null) {
+            dismissHandle.unhook();
+            dismissHandle = null;
+        }
         if (exitHandle != null) {
             exitHandle.unhook();
             exitHandle = null;

@@ -2,7 +2,7 @@
 
 <img src="\imgs\icon.webp" width="160" height="160" style="display: block; margin: 0 auto;" alt="icon" />
 
-# HyperCeiler
+# HyperCeiler-annibale
 
 ### Make HyperOS Great Again!
 
@@ -12,15 +12,19 @@
 
 ## 当前支持的版本
 
-基于我的K90 Pro Max（myron）4.0.0.25 进行功能修复
+基于K90修复。设备：REDMI K90（annibale）。
 
-适配版本：
+当前适配基线：HyperOS 4 `OS4.0.5.0.XPKCNXM`，Android 17 / API 37。
 
-HyperOS3-4 Android 16-17
+本分支基于 [K90 Pro Max 上游](https://github.com/wjy1065676928/HyperCeiler-myron) 继续适配；上游支持范围不等于本分支已经完成全部功能的实机验证。
 
-系统界面 com.android.systemui 17.03.260226.r
+当前 K90 应用版本：系统界面组件 `18.3.2.57.0`，桌面 `RELEASE-8.01.02.7755-260904-10151930-R`，手机管家 `13.6.5-261003.0.1`。
 
-系统界面组件 miui.systemui.plugin 18.2.2.2.0
+最新安装包见 [Releases](https://github.com/lykwzzwzss/HyperCeiler-annibale/releases)。4712 包含安装器提醒修复及上滑解锁后的人脸岛同步清理；人脸退场效果仍待该版本安装后实测确认。
+
+ADB 配置接口仅包含在 Debug 构建中，Release / Beta / Canary 不提供该入口。详情见 [ADB-SETTINGS.md](ADB-SETTINGS.md)。
+
+上游更新与 K90 适用性核对见 [2026-10-27 记录](UPSTREAM-K90-20261027.md)。
 
 ## 使用前说明
 
@@ -28,7 +32,7 @@ HyperOS3-4 Android 16-17
 
 本模块<b>不支持</b>`修改较多的第三方 Xiaomi HyperOS ROM`、`修改较多的系统软件`，以及`部分国际 Xiaomi HyperOS ROM`。
 
-目前 HyperCeiler 是基于 Android 16 的 Xiaomi HyperOS 3.0 的手机端设备进行适配，覆盖不是很完整，需要不断测试和改进。
+本分支面向上述 K90 系统版本适配，功能仍需按各自场景测试，不能保证所有选项均已生效。
 
 提交反馈前请注意是否已有相同反馈，避免给开发者造成困扰。花相同精力看相同反馈是一件很浪费时间的事情。
 
