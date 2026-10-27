@@ -61,7 +61,7 @@ public class AutoStart extends BaseHook {
         final Method revoke;
         final Method onePush;
         final Method userChanged;
-        final long autoStartPermission;
+        final Field autoStartPermission;
         try {
             revoke = instanceMethod(requiredClass("com.hyperos.security.service.OnePushJobService$GetCloudDataTask"),
                 "revokeAutoStart", void.class, Context.class, PackageInfo.class, List.class);
@@ -74,8 +74,10 @@ public class AutoStart extends BaseHook {
                 throw new NoSuchFieldException("Unexpected auto-start permission ID");
             }
             id.setAccessible(true);
-            autoStartPermission = id.getLong(null);
-            if (autoStartPermission <= 0) throw new IllegalStateException("Invalid auto-start permission ID");
+            // Do not read the value here: PermissionManager's static initializer selects
+            // its permission-ID format using the host Application context. Reading before
+            // attachBaseContext freezes legacy bit masks on Android 17 and breaks ECM init.
+            autoStartPermission = id;
         } catch (ReflectiveOperationException error) {
             throw new IllegalStateException("Automatic auto-start revocation interfaces unavailable", error);
         }
@@ -107,9 +109,12 @@ public class AutoStart extends BaseHook {
             // executes the original restore branch; manual settings remain untouched.
             handles.add(requireHandle(hookMethod(userChanged, new IMethodHook() {
                 @Override public void before(HookParam param) {
-                    if (active.get() && onePushDepth.get() > 0
-                            && ((Long) param.getArgs()[2]) == autoStartPermission) {
-                        param.setResult(true);
+                    if (!active.get() || onePushDepth.get() <= 0) return;
+                    try {
+                        long id = autoStartPermission.getLong(null);
+                        if (id > 0 && ((Long) param.getArgs()[2]) == id) param.setResult(true);
+                    } catch (IllegalAccessException error) {
+                        debugCallbackError("Read initialized auto-start permission ID", error);
                     }
                 }
             })));
