@@ -1,0 +1,35 @@
+/*
+ * This file is part of HyperCeiler.
+ *
+ * HyperCeiler is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Copyright (C) 2023-2026 HyperCeiler Contributions
+ */
+
+package com.sevtinge.hyperceiler.libhook.utils.api;
+
+/** Neutral results for the two observed guardprovider root-check signatures. */
+public final class RootCheckResult {
+    private RootCheckResult() {}
+
+    public static boolean supports(Class<?> returnType) {
+        return returnType == boolean.class || returnType == Boolean.class || returnType == String.class;
+    }
+
+    public static Object notRooted(Class<?> returnType) {
+        if (returnType == boolean.class || returnType == Boolean.class) return Boolean.FALSE;
+        if (returnType == String.class) return null;
+        throw new IllegalArgumentException("Unsupported root-check return type: " + returnType);
+    }
+}

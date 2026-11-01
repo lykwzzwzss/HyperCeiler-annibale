@@ -1,0 +1,78 @@
+name: K90 APK Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Java 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Restore persistent signing key
+        env:
+          K90_SIGNING_KEY: ${{ secrets.K90_SIGNING_KEY }}
+          K90_KEY_PASSWORD: ${{ secrets.K90_KEY_PASSWORD }}
+        run: |
+          umask 077
+          test -n "$K90_SIGNING_KEY"
+          test -n "$K90_KEY_PASSWORD"
+          printf '%s' "$K90_SIGNING_KEY" | base64 --decode > key.jks
+          printf '%s\n' 'storeFile=../key.jks' "storePassword=$K90_KEY_PASSWORD" 'keyAlias=k90' "keyPassword=$K90_KEY_PASSWORD" > signing.properties
+      - name: Build K90 APK
+        env:
+          GIT_ACTOR: ${{ github.actor }}
+          GIT_TOKEN: ${{ github.token }}
+        run: |
+          chmod +x gradlew
+          ./gradlew :library:libhook:testDebugUnitTest :app:testDebugUnitTest :app:assembleCanary --console=plain --no-daemon --max-workers=2
+      - name: Record APK hashes
+        run: |
+          find app/build/outputs/apk/canary -type f -name '*.apk' -exec sha256sum {} + | tee apk-sha256.txt
+          cat apk-sha256.txt >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: HyperCeiler-K90-${{ github.sha }}
+          path: |
+            app/build/outputs/apk/canary/*.apk
+            apk-sha256.txt
+            library/libhook/build/test-results/testDebugUnitTest/*.xml
+            app/build/test-results/testDebugUnitTest/*.xml
+          if-no-files-found: error
+          retention-days: 14
+      - name: Clean signing files
+        if: always()
+        run: rm -f signing.properties key.jks
+
+  native_host_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run host native tests
+        shell: bash
+        run: bash tests/run_host_native_tests.sh
+
+      - name: Upload test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-native-test-logs
+          path: /tmp/nativehook-host-tests/*.log
+          if-no-files-found: ignore

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!--
+      The action receivers live inside SystemUI / system_server and are registered with this
+      permission, so only this module can drive them. Declared here because libhook's manifest
+      is merged into the module package.
+    -->
+    <permission
+        android:name="com.sevtinge.hyperceiler.permission.SEND_ACTION"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.sevtinge.hyperceiler.permission.SEND_ACTION" />
+    <application>
+        <provider
+            android:name=".provider.SharedPrefsProvider"
+            android:authorities="com.sevtinge.hyperceiler.provider.sharedprefs"
+            android:defaultToDeviceProtectedStorage="true"
+            android:directBootAware="true"
+            android:exported="true"
+            android:grantUriPermissions="true" />
+
+    </application>
+</manifest>

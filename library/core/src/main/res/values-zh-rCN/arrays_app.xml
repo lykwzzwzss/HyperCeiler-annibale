@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="system_ui_face_island_success_glyph">
+        <item>微笑</item>
+        <item>对勾</item>
+    </string-array>
+</resources>
