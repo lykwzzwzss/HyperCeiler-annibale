@@ -29,7 +29,7 @@ public class Notes extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new DisableAiWatermark(), PrefsBridge.getBoolean("notes_disable_ai_watermark"));
-        initHook(UnlockAI.INSTANCE, PrefsBridge.getStringAsInt("notes_unlock_ai_mode", 0) != 0);
+        initHook(() -> new DisableAiWatermark(), () -> PrefsBridge.getBoolean("notes_disable_ai_watermark"));
+        initHook(() -> UnlockAI.INSTANCE, () -> PrefsBridge.getStringAsInt("notes_unlock_ai_mode", 0) != 0);
     }
 }

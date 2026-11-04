@@ -38,14 +38,14 @@ public class Updater extends BaseLoad {
     public void onPackageLoaded() {
         if (PrefsBridge.getBoolean("updater_enable_miui_version")) {
             if (PrefsBridge.getStringAsInt("updater_version_mode", 1) != 1) {
-                initHook(VersionCodeNew.INSTANCE, true);
+                initHook(() -> VersionCodeNew.INSTANCE, () -> true);
             } else {
-                initHook(new VersionCodeModify(), !TextUtils.isEmpty(PrefsBridge.getString("various_updater_miui_version", "")));
+                initHook(() -> new VersionCodeModify(), () -> !TextUtils.isEmpty(PrefsBridge.getString("various_updater_miui_version", "")));
             }
-            initHook(AndroidVersionCode.INSTANCE, !TextUtils.isEmpty(PrefsBridge.getString("various_updater_android_version", "")));
-            initHook(DeviceModify.INSTANCE, !TextUtils.isEmpty(PrefsBridge.getString("updater_device", "")));
+            initHook(() -> AndroidVersionCode.INSTANCE, () -> !TextUtils.isEmpty(PrefsBridge.getString("various_updater_android_version", "")));
+            initHook(() -> DeviceModify.INSTANCE, () -> !TextUtils.isEmpty(PrefsBridge.getString("updater_device", "")));
         }
-        initHook(new VabUpdate(), PrefsBridge.getBoolean("updater_fuck_vab"));
-        initHook(AutoUpdateDialog.INSTANCE, PrefsBridge.getBoolean("updater_diable_dialog"));
+        initHook(() -> new VabUpdate(), () -> PrefsBridge.getBoolean("updater_fuck_vab"));
+        initHook(() -> AutoUpdateDialog.INSTANCE, () -> PrefsBridge.getBoolean("updater_diable_dialog"));
     }
 }

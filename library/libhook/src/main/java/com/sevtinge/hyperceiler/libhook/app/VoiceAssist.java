@@ -9,6 +9,6 @@ import com.sevtinge.hyperceiler.libhook.rules.voiceassist.RemoveScreenTransWater
 public class VoiceAssist extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(new RemoveScreenTransWatermark(), PrefsBridge.getBoolean("voiceassist_remove_screen_trans_watermark"));
+        initHook(() -> new RemoveScreenTransWatermark(), () -> PrefsBridge.getBoolean("voiceassist_remove_screen_trans_watermark"));
     }
 }

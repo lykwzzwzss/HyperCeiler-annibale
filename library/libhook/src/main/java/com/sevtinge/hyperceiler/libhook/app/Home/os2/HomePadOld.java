@@ -143,152 +143,150 @@ public class HomePadOld extends BaseLoad {
             || PrefsBridge.getInt("home_gesture_line_double_click_action", 0) > 0;
 
         // 手势
-        initHook(new QuickBack(), PrefsBridge.getBoolean("home_navigation_quick_back"));
-        initHook(new PredictiveBackProgress(), PrefsBridge.getBoolean("home_navigation_predictive_progress"));
-        initHook(new CornerSlide(), gesturesEnabled && hasCornerGestureAction);
-        initHook(new DoubleTap(), gesturesEnabled && PrefsBridge.getInt("home_gesture_double_tap_action", 0) > 0);
-        initHook(new ScreenSwipe(), gesturesEnabled && hasScreenSwipeAction);
-        initHook(new ShakeDevice(), gesturesEnabled && PrefsBridge.getInt("home_gesture_shake_action", 0) > 0);
-        initHook(GestureLine.INSTANCE, gesturesEnabled && hasGestureLineAction);
-        // initHook(new SwipeAndStop(), PrefsBridge.getInt("home_gesture_swipe_and_stop_action" ,0) > 0);
+        initHook(() -> new QuickBack(), () -> PrefsBridge.getBoolean("home_navigation_quick_back"));
+        initHook(() -> new PredictiveBackProgress(), () -> PrefsBridge.getBoolean("home_navigation_predictive_progress"));
+        initHook(() -> new CornerSlide(), () -> gesturesEnabled && hasCornerGestureAction);
+        initHook(() -> new DoubleTap(), () -> gesturesEnabled && PrefsBridge.getInt("home_gesture_double_tap_action", 0) > 0);
+        initHook(() -> new ScreenSwipe(), () -> gesturesEnabled && hasScreenSwipeAction);
+        initHook(() -> new ShakeDevice(), () -> gesturesEnabled && PrefsBridge.getInt("home_gesture_shake_action", 0) > 0);
+        initHook(() -> GestureLine.INSTANCE, () -> gesturesEnabled && hasGestureLineAction);
+        // initHook(() -> new SwipeAndStop(), () -> PrefsBridge.getInt("home_gesture_swipe_and_stop_action" ,0) > 0);
 
-        initHook(new BackGestureAreaHeight(), PrefsBridge.getInt("home_navigation_back_area_height", 60) != 60);
-        initHook(new BackGestureAreaWidth(), PrefsBridge.getInt("home_navigation_back_area_width", 100) != 100);
+        initHook(() -> new BackGestureAreaHeight(), () -> PrefsBridge.getInt("home_navigation_back_area_height", 60) != 60);
+        initHook(() -> new BackGestureAreaWidth(), () -> PrefsBridge.getInt("home_navigation_back_area_width", 100) != 100);
 
         // 布局
-        // initHook(new UnlockGridsNoWord(), PrefsBridge.getBoolean("home_layout_unlock_grids_no_word"));
-        initHook(new WorkspacePadding(),
-                PrefsBridge.getBoolean("home_layout_workspace_padding_bottom_enable") ||
+        // initHook(() -> new UnlockGridsNoWord(), () -> PrefsBridge.getBoolean("home_layout_unlock_grids_no_word"));
+        initHook(() -> new WorkspacePadding(), () -> PrefsBridge.getBoolean("home_layout_workspace_padding_bottom_enable") ||
                         PrefsBridge.getBoolean("home_layout_workspace_padding_top_enable") ||
-                        PrefsBridge.getBoolean("home_layout_workspace_padding_horizontal_enable")
-        );
+                        PrefsBridge.getBoolean("home_layout_workspace_padding_horizontal_enable"));
 
-        initHook(new IndicatorMarginBottom(), PrefsBridge.getBoolean("home_layout_indicator_margin_bottom_enable"));
-        initHook(new HotSeatsHeight(), PrefsBridge.getBoolean("home_layout_hotseats_height_enable"));
-        initHook(new HotSeatsMarginTop(), PrefsBridge.getBoolean("home_layout_hotseats_margin_top_enable"));
-        initHook(new HotSeatsMarginBottom(), PrefsBridge.getBoolean("home_layout_hotseats_margin_bottom_enable"));
+        initHook(() -> new IndicatorMarginBottom(), () -> PrefsBridge.getBoolean("home_layout_indicator_margin_bottom_enable"));
+        initHook(() -> new HotSeatsHeight(), () -> PrefsBridge.getBoolean("home_layout_hotseats_height_enable"));
+        initHook(() -> new HotSeatsMarginTop(), () -> PrefsBridge.getBoolean("home_layout_hotseats_margin_top_enable"));
+        initHook(() -> new HotSeatsMarginBottom(), () -> PrefsBridge.getBoolean("home_layout_hotseats_margin_bottom_enable"));
 
         // 文件夹
-        initHook(FolderAutoClose.INSTANCE, PrefsBridge.getBoolean("home_folder_auto_close"));
-        initHook(new FolderShade(), PrefsBridge.getStringAsInt("home_folder_shade", 1) > 0);
-        initHook(FolderColumns.INSTANCE, PrefsBridge.getStringAsInt("home_folder_title_pos", 0) != 0 ||
+        initHook(() -> FolderAutoClose.INSTANCE, () -> PrefsBridge.getBoolean("home_folder_auto_close"));
+        initHook(() -> new FolderShade(), () -> PrefsBridge.getStringAsInt("home_folder_shade", 1) > 0);
+        initHook(() -> FolderColumns.INSTANCE, () -> PrefsBridge.getStringAsInt("home_folder_title_pos", 0) != 0 ||
                 PrefsBridge.getBoolean("home_folder_width") ||
                 PrefsBridge.getInt("home_folder_columns", 3) != 3);
-        initHook(new FolderAnimation(), PrefsBridge.getBoolean("home_folder_animation"));
-        initHook(new SmallFolderIconBlur(), PrefsBridge.getBoolean("home_small_folder_icon_bg"));
-        initHook(FolderVerticalSpacing.INSTANCE, PrefsBridge.getBoolean("home_folder_vertical_spacing_enable"));
+        initHook(() -> new FolderAnimation(), () -> PrefsBridge.getBoolean("home_folder_animation"));
+        initHook(() -> new SmallFolderIconBlur(), () -> PrefsBridge.getBoolean("home_small_folder_icon_bg"));
+        initHook(() -> FolderVerticalSpacing.INSTANCE, () -> PrefsBridge.getBoolean("home_folder_vertical_spacing_enable"));
 
-        initHook(new BigFolderIcon(), false);
-        initHook(new BigFolderIconBlur2x1(), PrefsBridge.getBoolean("home_big_folder_icon_bg_2x1"));
-        initHook(new BigFolderIconBlur1x2(), PrefsBridge.getBoolean("home_big_folder_icon_bg_1x2"));
-        initHook(new BigFolderIconBlur(), PrefsBridge.getBoolean("home_big_folder_icon_bg"));
-        initHook(new BigFolderItemMaxCount(), PrefsBridge.getBoolean("home_big_folder_item_max_count"));
-        initHook(new UnlockBlurSupported(), PrefsBridge.getBoolean("home_folder_unlock_blur_supported"));
+        initHook(() -> new BigFolderIcon(), () -> false);
+        initHook(() -> new BigFolderIconBlur2x1(), () -> PrefsBridge.getBoolean("home_big_folder_icon_bg_2x1"));
+        initHook(() -> new BigFolderIconBlur1x2(), () -> PrefsBridge.getBoolean("home_big_folder_icon_bg_1x2"));
+        initHook(() -> new BigFolderIconBlur(), () -> PrefsBridge.getBoolean("home_big_folder_icon_bg"));
+        initHook(() -> new BigFolderItemMaxCount(), () -> PrefsBridge.getBoolean("home_big_folder_item_max_count"));
+        initHook(() -> new UnlockBlurSupported(), () -> PrefsBridge.getBoolean("home_folder_unlock_blur_supported"));
 
         // 抽屉
-        initHook(AppDrawer.INSTANCE, PrefsBridge.getBoolean("home_drawer_all") ||
+        initHook(() -> AppDrawer.INSTANCE, () -> PrefsBridge.getBoolean("home_drawer_all") ||
                 PrefsBridge.getBoolean("home_drawer_editor"));
-        initHook(AllAppsContainerViewBlur.INSTANCE, PrefsBridge.getBoolean("home_drawer_blur"));
-        initHook(new AllAppsContainerViewSuperBlur(), PrefsBridge.getBoolean("home_drawer_blur_super"));
-        initHook(new PinyinArrangement(), PrefsBridge.getBoolean("home_drawer_pinyin"));
+        initHook(() -> AllAppsContainerViewBlur.INSTANCE, () -> PrefsBridge.getBoolean("home_drawer_blur"));
+        initHook(() -> new AllAppsContainerViewSuperBlur(), () -> PrefsBridge.getBoolean("home_drawer_blur_super"));
+        initHook(() -> new PinyinArrangement(), () -> PrefsBridge.getBoolean("home_drawer_pinyin"));
 
         // 最近任务
-        initHook(HideStatusBarWhenEnterRecent.INSTANCE, PrefsBridge.getBoolean("home_recent_hide_status_bar_in_task_view"));
-        initHook(RemoveCardAnim.INSTANCE, PrefsBridge.getBoolean("home_recent_modify_animation"));
-        initHook(TaskViewHorizontal.INSTANCE, true);
-        initHook(TaskViewVertical.INSTANCE, true);
-        initHook(HideFreeform.INSTANCE, PrefsBridge.getBoolean("home_recent_hide_freeform"));
-        initHook(FreeformCardBackgroundColor.INSTANCE, true);
-        initHook(CardTextSize.INSTANCE, PrefsBridge.getInt("home_recent_text_size", -1) != -1);
-        initHook(CardTextColor.INSTANCE, PrefsBridge.getInt("home_recent_text_color", -1) != -1);
-        initHook(UnlockPin.INSTANCE, PrefsBridge.getBoolean("home_recent_unlock_pin"));
-        initHook(RecentText.INSTANCE, !Objects.equals(PrefsBridge.getString("home_recent_text", ""), ""));
-        initHook(RemoveIcon.INSTANCE, PrefsBridge.getBoolean("home_recent_remove_icon"));
-        initHook(RemoveLeftShare.INSTANCE, PrefsBridge.getBoolean("home_recent_hide_world_circulate"));
-        initHook(RecentResource.INSTANCE, PrefsBridge.getInt("task_view_corners", 20) != 20 ||
+        initHook(() -> HideStatusBarWhenEnterRecent.INSTANCE, () -> PrefsBridge.getBoolean("home_recent_hide_status_bar_in_task_view"));
+        initHook(() -> RemoveCardAnim.INSTANCE, () -> PrefsBridge.getBoolean("home_recent_modify_animation"));
+        initHook(() -> TaskViewHorizontal.INSTANCE, () -> true);
+        initHook(() -> TaskViewVertical.INSTANCE, () -> true);
+        initHook(() -> HideFreeform.INSTANCE, () -> PrefsBridge.getBoolean("home_recent_hide_freeform"));
+        initHook(() -> FreeformCardBackgroundColor.INSTANCE, () -> true);
+        initHook(() -> CardTextSize.INSTANCE, () -> PrefsBridge.getInt("home_recent_text_size", -1) != -1);
+        initHook(() -> CardTextColor.INSTANCE, () -> PrefsBridge.getInt("home_recent_text_color", -1) != -1);
+        initHook(() -> UnlockPin.INSTANCE, () -> PrefsBridge.getBoolean("home_recent_unlock_pin"));
+        initHook(() -> RecentText.INSTANCE, () -> !Objects.equals(PrefsBridge.getString("home_recent_text", ""), ""));
+        initHook(() -> RemoveIcon.INSTANCE, () -> PrefsBridge.getBoolean("home_recent_remove_icon"));
+        initHook(() -> RemoveLeftShare.INSTANCE, () -> PrefsBridge.getBoolean("home_recent_hide_world_circulate"));
+        initHook(() -> RecentResource.INSTANCE, () -> PrefsBridge.getInt("task_view_corners", 20) != 20 ||
                 PrefsBridge.getInt("task_view_header_height", 40) != 40);
-        initHook(TaskViewHeaderOffset.INSTANCE, PrefsBridge.getInt("task_view_header_horizontal_offset", 30) != 30);
-        initHook(RealMemory.INSTANCE, PrefsBridge.getBoolean("home_recent_show_real_memory"));
-        initHook(MemInfoShow.INSTANCE, PrefsBridge.getBoolean("home_recent_show_memory_info"));
-        initHook(AlwaysShowCleanUp.INSTANCE, PrefsBridge.getBoolean("always_show_clean_up") || PrefsBridge.getBoolean("home_recent_hide_clean_up"));
-        initHook(new BackgroundBlur(), PrefsBridge.getBoolean("home_recent_blur"));
-        initHook(new ShowLaunch(), PrefsBridge.getBoolean("home_recent_show_launch"));
-        initHook(HideRecentCard.INSTANCE, !PrefsBridge.getStringSet("home_recent_hide_card").isEmpty());
+        initHook(() -> TaskViewHeaderOffset.INSTANCE, () -> PrefsBridge.getInt("task_view_header_horizontal_offset", 30) != 30);
+        initHook(() -> RealMemory.INSTANCE, () -> PrefsBridge.getBoolean("home_recent_show_real_memory"));
+        initHook(() -> MemInfoShow.INSTANCE, () -> PrefsBridge.getBoolean("home_recent_show_memory_info"));
+        initHook(() -> AlwaysShowCleanUp.INSTANCE, () -> PrefsBridge.getBoolean("always_show_clean_up") || PrefsBridge.getBoolean("home_recent_hide_clean_up"));
+        initHook(() -> new BackgroundBlur(), () -> PrefsBridge.getBoolean("home_recent_blur"));
+        initHook(() -> new ShowLaunch(), () -> PrefsBridge.getBoolean("home_recent_show_launch"));
+        initHook(() -> HideRecentCard.INSTANCE, () -> !PrefsBridge.getStringSet("home_recent_hide_card").isEmpty());
 
         // 图标
-        initHook(BigIconCorner.INSTANCE, PrefsBridge.getBoolean("home_title_big_icon_corner"));
-        initHook(new DownloadAnimation(), PrefsBridge.getBoolean("home_title_download_animation"));
-        initHook(DisableHideTheme.INSTANCE, PrefsBridge.getBoolean("home_title_disable_hide_theme"));
-        initHook(DisableHideApp.INSTANCE, PrefsBridge.getBoolean("home_title_disable_hide_file") || PrefsBridge.getBoolean("home_title_disable_hide_google"));
-        initHook(new FakeNonDefaultIcon(), PrefsBridge.getBoolean("home_title_fake_non_default_icon"));
-        initHook(new IconSize(), PrefsBridge.getBoolean("home_title_icon_size_enable"));
+        initHook(() -> BigIconCorner.INSTANCE, () -> PrefsBridge.getBoolean("home_title_big_icon_corner"));
+        initHook(() -> new DownloadAnimation(), () -> PrefsBridge.getBoolean("home_title_download_animation"));
+        initHook(() -> DisableHideTheme.INSTANCE, () -> PrefsBridge.getBoolean("home_title_disable_hide_theme"));
+        initHook(() -> DisableHideApp.INSTANCE, () -> PrefsBridge.getBoolean("home_title_disable_hide_file") || PrefsBridge.getBoolean("home_title_disable_hide_google"));
+        initHook(() -> new FakeNonDefaultIcon(), () -> PrefsBridge.getBoolean("home_title_fake_non_default_icon"));
+        initHook(() -> new IconSize(), () -> PrefsBridge.getBoolean("home_title_icon_size_enable"));
 
         // 标题
-        initHook(new TitleMarquee(), PrefsBridge.getBoolean("home_title_title_marquee"));
-        initHook(new HideNewInstallIndicator(), PrefsBridge.getBoolean("home_title_title_new_install"));
-        initHook(new IconTitleCustomization(), PrefsBridge.getBoolean("home_title_title_icontitlecustomization_onoff"));
-        initHook(new HiddenAllTitle(), PrefsBridge.getBoolean("home_drawer_font_hidden"));
-        initHook(new TitleFontSize());
-        initHook(IconTitleColor.INSTANCE, PrefsBridge.getInt("home_title_title_color", -1) != -1);
-        initHook(new UnlockHotseatIcon(), PrefsBridge.getBoolean("home_dock_unlock_hotseat"));
-        initHook(new IconMessageColorCustom(), PrefsBridge.getBoolean("home_title_notif_color"));
+        initHook(() -> new TitleMarquee(), () -> PrefsBridge.getBoolean("home_title_title_marquee"));
+        initHook(() -> new HideNewInstallIndicator(), () -> PrefsBridge.getBoolean("home_title_title_new_install"));
+        initHook(() -> new IconTitleCustomization(), () -> PrefsBridge.getBoolean("home_title_title_icontitlecustomization_onoff"));
+        initHook(() -> new HiddenAllTitle(), () -> PrefsBridge.getBoolean("home_drawer_font_hidden"));
+        initHook(() -> new TitleFontSize());
+        initHook(() -> IconTitleColor.INSTANCE, () -> PrefsBridge.getInt("home_title_title_color", -1) != -1);
+        initHook(() -> new UnlockHotseatIcon(), () -> PrefsBridge.getBoolean("home_dock_unlock_hotseat"));
+        initHook(() -> new IconMessageColorCustom(), () -> PrefsBridge.getBoolean("home_title_notif_color"));
 
         // 小部件
-        initHook(new AllWidgetAnimation(), PrefsBridge.getBoolean("home_widget_all_widget_animation"));
-        initHook(AlwaysShowMiuiWidget.INSTANCE, PrefsBridge.getBoolean("home_widget_show_miui_widget"));
-        initHook(AllowMoveAllWidgetToMinus.INSTANCE, PrefsBridge.getBoolean("home_widget_allow_moved_to_minus_one_screen"));
-        initHook(new WidgetCornerRadius(), PrefsBridge.getInt("home_widget_corner_radius", 0) > 0);
-        initHook(ResizableWidgets.INSTANCE, PrefsBridge.getBoolean("home_widget_resizable"));
-        initHook(new WidgetBlurOpt(), PrefsBridge.getBoolean("home_widget_widget_blur_opt"));
+        initHook(() -> new AllWidgetAnimation(), () -> PrefsBridge.getBoolean("home_widget_all_widget_animation"));
+        initHook(() -> AlwaysShowMiuiWidget.INSTANCE, () -> PrefsBridge.getBoolean("home_widget_show_miui_widget"));
+        initHook(() -> AllowMoveAllWidgetToMinus.INSTANCE, () -> PrefsBridge.getBoolean("home_widget_allow_moved_to_minus_one_screen"));
+        initHook(() -> new WidgetCornerRadius(), () -> PrefsBridge.getInt("home_widget_corner_radius", 0) > 0);
+        initHook(() -> ResizableWidgets.INSTANCE, () -> PrefsBridge.getBoolean("home_widget_resizable"));
+        initHook(() -> new WidgetBlurOpt(), () -> PrefsBridge.getBoolean("home_widget_widget_blur_opt"));
 
         // 底栏
-        initHook(new DockCustom(), PrefsBridge.getBoolean("home_dock_bg_custom_enable") && PrefsBridge.getStringAsInt("home_dock_add_blur", 0) == 2);
-        initHook(DockCustomNew.INSTANCE, PrefsBridge.getBoolean("home_dock_bg_custom_enable") && (PrefsBridge.getStringAsInt("home_dock_add_blur", 0) == 0 || PrefsBridge.getStringAsInt("home_dock_add_blur", 0) == 1));
-        initHook(new SeekPoints(), PrefsBridge.getStringAsInt("home_other_seek_points", 0) > 0);
-        initHook(ShowDockIconTitle.INSTANCE, PrefsBridge.getBoolean("home_dock_icon_title"));
-        initHook(new HideNavigationBar(), PrefsBridge.getBoolean("system_ui_hide_navigation_bar"));
-        initHook(DisableRecentsIcon.INSTANCE, PrefsBridge.getBoolean("home_dock_disable_recents_icon"));
-        initHook(SlideUpOnlyShowDock.INSTANCE, PrefsBridge.getBoolean("home_dock_slide_up_only_show_dock") && !PrefsBridge.getBoolean("home_dock_hide_dock"));
-        initHook(HideDock.INSTANCE, PrefsBridge.getBoolean("home_dock_hide_dock"));
+        initHook(() -> new DockCustom(), () -> PrefsBridge.getBoolean("home_dock_bg_custom_enable") && PrefsBridge.getStringAsInt("home_dock_add_blur", 0) == 2);
+        initHook(() -> DockCustomNew.INSTANCE, () -> PrefsBridge.getBoolean("home_dock_bg_custom_enable") && (PrefsBridge.getStringAsInt("home_dock_add_blur", 0) == 0 || PrefsBridge.getStringAsInt("home_dock_add_blur", 0) == 1));
+        initHook(() -> new SeekPoints(), () -> PrefsBridge.getStringAsInt("home_other_seek_points", 0) > 0);
+        initHook(() -> ShowDockIconTitle.INSTANCE, () -> PrefsBridge.getBoolean("home_dock_icon_title"));
+        initHook(() -> new HideNavigationBar(), () -> PrefsBridge.getBoolean("system_ui_hide_navigation_bar"));
+        initHook(() -> DisableRecentsIcon.INSTANCE, () -> PrefsBridge.getBoolean("home_dock_disable_recents_icon"));
+        initHook(() -> SlideUpOnlyShowDock.INSTANCE, () -> PrefsBridge.getBoolean("home_dock_slide_up_only_show_dock") && !PrefsBridge.getBoolean("home_dock_hide_dock"));
+        initHook(() -> HideDock.INSTANCE, () -> PrefsBridge.getBoolean("home_dock_hide_dock"));
 
         // 其他
-        initHook(new HomeMode(), PrefsBridge.getStringAsInt("home_other_home_mode", 0) > 0);
-        initHook(new InfiniteScroll(), PrefsBridge.getBoolean("home_other_infinite_scroll"));
-        initHook(new FreeformShortcutMenu(), PrefsBridge.getBoolean("home_other_tasks_shortcut_menu"));
-        initHook(new EnableIconMonoChrome(), PrefsBridge.getBoolean("home_other_icon_mono_chrome"));
-        initHook(new HomePortraitReverse(), PrefsBridge.getBoolean("home_other_portrait_reverse"));
-        initHook(AlwaysBlurWallpaper.INSTANCE, PrefsBridge.getBoolean("home_other_always_blur_launcher_wallpaper"));
-        initHook(BlurRadius.INSTANCE, PrefsBridge.getInt("home_other_blur_radius", 100) != 100);
-        initHook(ShortcutItemCount.INSTANCE, PrefsBridge.getBoolean("home_other_shortcut_remove_restrictions"));
-        initHook(ShowAllHideApp.INSTANCE, true); // 桌面快捷方式管理
-        // initHook(new AllowShareApk(), PrefsBridge.getBoolean("home_other_allow_share_apk"));
-        initHook(new DisablePrestart(), PrefsBridge.getBoolean("home_other_disable_prestart"));
-        initHook(new OptAppLaunchDelay(), PrefsBridge.getBoolean("home_other_opt_app_launch_delay"));
+        initHook(() -> new HomeMode(), () -> PrefsBridge.getStringAsInt("home_other_home_mode", 0) > 0);
+        initHook(() -> new InfiniteScroll(), () -> PrefsBridge.getBoolean("home_other_infinite_scroll"));
+        initHook(() -> new FreeformShortcutMenu(), () -> PrefsBridge.getBoolean("home_other_tasks_shortcut_menu"));
+        initHook(() -> new EnableIconMonoChrome(), () -> PrefsBridge.getBoolean("home_other_icon_mono_chrome"));
+        initHook(() -> new HomePortraitReverse(), () -> PrefsBridge.getBoolean("home_other_portrait_reverse"));
+        initHook(() -> AlwaysBlurWallpaper.INSTANCE, () -> PrefsBridge.getBoolean("home_other_always_blur_launcher_wallpaper"));
+        initHook(() -> BlurRadius.INSTANCE, () -> PrefsBridge.getInt("home_other_blur_radius", 100) != 100);
+        initHook(() -> ShortcutItemCount.INSTANCE, () -> PrefsBridge.getBoolean("home_other_shortcut_remove_restrictions"));
+        initHook(() -> ShowAllHideApp.INSTANCE, () -> true); // 桌面快捷方式管理
+        // initHook(() -> new AllowShareApk(), () -> PrefsBridge.getBoolean("home_other_allow_share_apk"));
+        initHook(() -> new DisablePrestart(), () -> PrefsBridge.getBoolean("home_other_disable_prestart"));
+        initHook(() -> new OptAppLaunchDelay(), () -> PrefsBridge.getBoolean("home_other_opt_app_launch_delay"));
 
         // 实验性功能
-        initHook(BlurWhenShowShortcutMenu.INSTANCE, PrefsBridge.getBoolean("home_other_shortcut_background_blur"));
-        initHook(new FoldDock(), PrefsBridge.getBoolean("home_other_fold_dock"));
-        // initHook(new AllAppsBlur); // ??
-        initHook(new LargeIconCornerRadius(), PrefsBridge.getBoolean("home_large_icon_enable"));
+        initHook(() -> BlurWhenShowShortcutMenu.INSTANCE, () -> PrefsBridge.getBoolean("home_other_shortcut_background_blur"));
+        initHook(() -> new FoldDock(), () -> PrefsBridge.getBoolean("home_other_fold_dock"));
+        // initHook(() -> new AllAppsBlur); // ??
+        initHook(() -> new LargeIconCornerRadius(), () -> PrefsBridge.getBoolean("home_large_icon_enable"));
 
         // 多小窗
-        initHook(new FreeFormCountForHome(), PrefsBridge.getBoolean("system_framework_freeform_count"));
-        initHook(new MaxFreeForm(), PrefsBridge.getBoolean("system_framework_freeform_count"));
+        initHook(() -> new FreeFormCountForHome(), () -> PrefsBridge.getBoolean("system_framework_freeform_count"));
+        initHook(() -> new MaxFreeForm(), () -> PrefsBridge.getBoolean("system_framework_freeform_count"));
 
         // Other
-        initHook(new ToastSlideAgain(), PrefsBridge.getBoolean("home_other_toast_slide_again"));
-        initHook(new StickyFloatingWindowsForHome(), PrefsBridge.getBoolean("system_framework_freeform_sticky"));
-        initHook(AnimDurationRatio.INSTANCE, true);
-        initHook(SetDeviceLevel.INSTANCE, PrefsBridge.getBoolean("home_other_high_models"));
+        initHook(() -> new ToastSlideAgain(), () -> PrefsBridge.getBoolean("home_other_toast_slide_again"));
+        initHook(() -> new StickyFloatingWindowsForHome(), () -> PrefsBridge.getBoolean("system_framework_freeform_sticky"));
+        initHook(() -> AnimDurationRatio.INSTANCE, () -> true);
+        initHook(() -> SetDeviceLevel.INSTANCE, () -> PrefsBridge.getBoolean("home_other_high_models"));
 
         // 小米/红米平板相关
         boolean mMoreSetting = PrefsBridge.getBoolean("home_other_mi_pad_enable_more_setting");
-        initHook(SetGestureNeedFingerNum.INSTANCE, PrefsBridge.getBoolean("mipad_input_need_finger_num"));
-        initHook(EnableMoreSetting.INSTANCE, mMoreSetting);
-        initHook(EnableHideGestureLine.INSTANCE, mMoreSetting);
+        initHook(() -> SetGestureNeedFingerNum.INSTANCE, () -> PrefsBridge.getBoolean("mipad_input_need_finger_num"));
+        initHook(() -> EnableMoreSetting.INSTANCE, () -> mMoreSetting);
+        initHook(() -> EnableHideGestureLine.INSTANCE, () -> mMoreSetting);
 
         // reshook
-        initHook(EnableIconMonetColor.INSTANCE, PrefsBridge.getBoolean("home_other_icon_monet_color"));
+        initHook(() -> EnableIconMonetColor.INSTANCE, () -> PrefsBridge.getBoolean("home_other_icon_monet_color"));
     }
 
 }

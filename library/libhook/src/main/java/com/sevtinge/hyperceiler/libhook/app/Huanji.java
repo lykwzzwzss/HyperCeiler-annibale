@@ -27,6 +27,6 @@ import com.sevtinge.hyperceiler.libhook.rules.huanji.AllowMoveAllApps;
 public class Huanji extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(new AllowMoveAllApps(), PrefsBridge.getBoolean("huanji_allow_all_apps"));
+        initHook(() -> new AllowMoveAllApps(), () -> PrefsBridge.getBoolean("huanji_allow_all_apps"));
     }
 }

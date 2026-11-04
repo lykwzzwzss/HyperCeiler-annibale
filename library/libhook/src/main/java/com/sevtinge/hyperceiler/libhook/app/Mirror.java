@@ -29,6 +29,6 @@ public class Mirror extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(UnlockSendAppM.INSTANCE, PrefsBridge.getBoolean("milink_unlock_send_app"));
+        initHook(() -> UnlockSendAppM.INSTANCE, () -> PrefsBridge.getBoolean("milink_unlock_send_app"));
     }
 }

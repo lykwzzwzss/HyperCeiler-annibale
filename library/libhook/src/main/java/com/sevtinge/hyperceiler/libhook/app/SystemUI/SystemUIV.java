@@ -139,60 +139,60 @@ public class SystemUIV extends BaseLoad {
     public void onPackageLoaded() {
         MiuiStub.createHook();
         // PluginHelper
-        initHook(NewPluginHelperKt.INSTANCE);
+        initHook(() -> NewPluginHelperKt.INSTANCE);
         // Actions
-        initHook(new StatusBarActionBootstrap(), PrefsBridge.getBoolean("home_gesture_enable"));
+        initHook(() -> new StatusBarActionBootstrap(), () -> PrefsBridge.getBoolean("home_gesture_enable"));
 
         // 锁屏
-        initHook(CustomizeBottomButton.INSTANCE, Keyguard.getLeftButtonType() != 0 && !isMoreSmallVersion(200, 2f));
-        initHook(new ScramblePIN(), PrefsBridge.getBoolean("system_ui_lock_screen_scramble_pin"));
-        initHook(ChargingCVP.INSTANCE, PrefsBridge.getBoolean("system_ui_lock_screen_show_charging_cv"));
-        initHook(RemoveCamera.INSTANCE, PrefsBridge.getBoolean("system_ui_lock_screen_hide_camera") && !isMoreSmallVersion(200, 2f));
-        initHook(LockScreenDoubleTapToSleep.INSTANCE, PrefsBridge.getBoolean("system_ui_lock_screen_double_lock"));
-        initHook(NotificationShowOnKeyguard.INSTANCE, PrefsBridge.getBoolean("system_ui_lock_screen_unlock_notification_restrict"));
-        initHook(KeepNotification.INSTANCE, PrefsBridge.getBoolean("system_ui_lock_screen_keep_notification"));
-        initHook(HideLockscreenZenMode.INSTANCE, PrefsBridge.getBoolean("system_ui_lock_screen_not_disturb_mode"));
-        initHook(HideLockScreenHint.INSTANCE, PrefsBridge.getBoolean("system_ui_lock_screen_unlock_tip"));
-        initHook(HideLockScreenStatusBar.INSTANCE, PrefsBridge.getBoolean("system_ui_lock_screen_hide_status_bar"));
-        initHook(AllowThirdLockScreenUseFace.INSTANCE, PrefsBridge.getBoolean("system_ui_lock_screen_allow_third_face"));
-        initHook(new DisableUnlockByBleToast(), PrefsBridge.getBoolean("system_ui_lock_screen_disable_unlock_by_ble_toast"));
-        initHook(new LinkageAnimCustomer(), PrefsBridge.getBoolean("system_ui_lock_screen_linkage_anim"));
-        initHook(BlurButton.INSTANCE, PrefsBridge.getBoolean("system_ui_lock_screen_blur_button") && !isMoreSmallVersion(200, 2f));
+        initHook(() -> CustomizeBottomButton.INSTANCE, () -> Keyguard.getLeftButtonType() != 0 && !isMoreSmallVersion(200, 2f));
+        initHook(() -> new ScramblePIN(), () -> PrefsBridge.getBoolean("system_ui_lock_screen_scramble_pin"));
+        initHook(() -> ChargingCVP.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_lock_screen_show_charging_cv"));
+        initHook(() -> RemoveCamera.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_lock_screen_hide_camera") && !isMoreSmallVersion(200, 2f));
+        initHook(() -> LockScreenDoubleTapToSleep.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_lock_screen_double_lock"));
+        initHook(() -> NotificationShowOnKeyguard.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_lock_screen_unlock_notification_restrict"));
+        initHook(() -> KeepNotification.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_lock_screen_keep_notification"));
+        initHook(() -> HideLockscreenZenMode.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_lock_screen_not_disturb_mode"));
+        initHook(() -> HideLockScreenHint.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_lock_screen_unlock_tip"));
+        initHook(() -> HideLockScreenStatusBar.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_lock_screen_hide_status_bar"));
+        initHook(() -> AllowThirdLockScreenUseFace.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_lock_screen_allow_third_face"));
+        initHook(() -> new DisableUnlockByBleToast(), () -> PrefsBridge.getBoolean("system_ui_lock_screen_disable_unlock_by_ble_toast"));
+        initHook(() -> new LinkageAnimCustomer(), () -> PrefsBridge.getBoolean("system_ui_lock_screen_linkage_anim"));
+        initHook(() -> BlurButton.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_lock_screen_blur_button") && !isMoreSmallVersion(200, 2f));
 
         // 状态栏图标
-        initHook(new StatusBarIcon(), true);
-        initHook(new IconsFromSystemManager(), true);
-        initHook(WifiStandard.INSTANCE, PrefsBridge.getStringAsInt("system_ui_status_bar_icon_wifi_standard", 0) > 0);
-        initHook(new SelectiveHideIconForAlarmClock(), PrefsBridge.getStringAsInt("system_ui_status_bar_icon_alarm_clock", 0) == 3 && PrefsBridge.getInt("system_ui_status_bar_icon_alarm_clock_n", 0) > 0);
-        initHook(new NotificationIconColumns(), PrefsBridge.getBoolean("system_ui_status_bar_notification_icon_maximum_enable"));
-        initHook(new HideStatusBarBeforeScreenshot(), PrefsBridge.getBoolean("system_ui_status_bar_hide_icon"));
-        initHook(new DataSaverIcon(), PrefsBridge.getStringAsInt("system_ui_status_bar_icon_data_saver", 0) != 0);
-        initHook(WifiNetworkIndicator.INSTANCE, PrefsBridge.getBoolean("system_ui_status_bar_icon_wifi_network_indicator_new"));
-        initHook(HideVoWiFiIcon.INSTANCE, PrefsBridge.getBoolean("system_ui_status_bar_icon_vowifi") || PrefsBridge.getBoolean("system_ui_status_bar_icon_volte"));
-        // initHook(new StickyFloatingWindowsForSystemUI(), PrefsBridge.getBoolean("system_framework_freeform_sticky"));
+        initHook(() -> new StatusBarIcon(), () -> true);
+        initHook(() -> new IconsFromSystemManager(), () -> true);
+        initHook(() -> WifiStandard.INSTANCE, () -> PrefsBridge.getStringAsInt("system_ui_status_bar_icon_wifi_standard", 0) > 0);
+        initHook(() -> new SelectiveHideIconForAlarmClock(), () -> PrefsBridge.getStringAsInt("system_ui_status_bar_icon_alarm_clock", 0) == 3 && PrefsBridge.getInt("system_ui_status_bar_icon_alarm_clock_n", 0) > 0);
+        initHook(() -> new NotificationIconColumns(), () -> PrefsBridge.getBoolean("system_ui_status_bar_notification_icon_maximum_enable"));
+        initHook(() -> new HideStatusBarBeforeScreenshot(), () -> PrefsBridge.getBoolean("system_ui_status_bar_hide_icon"));
+        initHook(() -> new DataSaverIcon(), () -> PrefsBridge.getStringAsInt("system_ui_status_bar_icon_data_saver", 0) != 0);
+        initHook(() -> WifiNetworkIndicator.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_status_bar_icon_wifi_network_indicator_new"));
+        initHook(() -> HideVoWiFiIcon.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_status_bar_icon_vowifi") || PrefsBridge.getBoolean("system_ui_status_bar_icon_volte"));
+        // initHook(() -> new StickyFloatingWindowsForSystemUI(), () -> PrefsBridge.getBoolean("system_framework_freeform_sticky"));
 
         // 电池相关
         boolean isHideBatteryIcon = PrefsBridge.getBoolean("system_ui_status_bar_battery_icon") ||
                 PrefsBridge.getBoolean("system_ui_status_bar_battery_percent") ||
                 PrefsBridge.getBoolean("system_ui_status_bar_battery_percent_mark") ||
                 PrefsBridge.getBoolean("system_ui_status_bar_battery_charging");
-        initHook(HideBatteryIcon.INSTANCE, isHideBatteryIcon);
-        initHook(BatteryStyle.INSTANCE, PrefsBridge.getBoolean("system_ui_status_bar_battery_style_enable_custom") ||
+        initHook(() -> HideBatteryIcon.INSTANCE, () -> isHideBatteryIcon);
+        initHook(() -> BatteryStyle.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_status_bar_battery_style_enable_custom") ||
                 PrefsBridge.getBoolean("system_ui_status_bar_battery_style_change_location"));
-        initHook(BatteryDetailIndicator.INSTANCE, PrefsBridge.getBoolean("system_ui_statusbar_battery_detail_enable"));
+        initHook(() -> BatteryDetailIndicator.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_statusbar_battery_detail_enable"));
 
         // 网速指示器
         if (PrefsBridge.getBoolean("system_ui_statusbar_network_speed_all_status_enable")) {
-            initHook(NewNetworkSpeed.INSTANCE, true);
-            initHook(NewNetworkSpeedStyle.INSTANCE, true);
-            initHook(new NetworkSpeedSpacing(), PrefsBridge.getInt("system_ui_statusbar_network_speed_update_spacings", 40) != 40);
-            initHook(new NetworkSpeedSec(), PrefsBridge.getBoolean("system_ui_statusbar_network_speed_sec_unit"));
+            initHook(() -> NewNetworkSpeed.INSTANCE, () -> true);
+            initHook(() -> NewNetworkSpeedStyle.INSTANCE, () -> true);
+            initHook(() -> new NetworkSpeedSpacing(), () -> PrefsBridge.getInt("system_ui_statusbar_network_speed_update_spacings", 40) != 40);
+            initHook(() -> new NetworkSpeedSec(), () -> PrefsBridge.getBoolean("system_ui_statusbar_network_speed_sec_unit"));
         }
 
-        initHook(StatusBarClockNew.INSTANCE, PrefsBridge.getBoolean("system_ui_statusbar_clock_all_status_enable"));
+        initHook(() -> StatusBarClockNew.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_statusbar_clock_all_status_enable"));
         //
         // // 硬件指示器
-        // initHook(new DisplayHardwareDetail(), PrefsBridge.getBoolean("system_ui_statusbar_battery_enable") ||
+        // initHook(() -> new DisplayHardwareDetail(), () -> PrefsBridge.getBoolean("system_ui_statusbar_battery_enable") ||
         //         PrefsBridge.getBoolean("system_ui_statusbar_temp_enable"));
         //
         // // initHook(new DisplayHardwareDetailForHyper(), true);
@@ -292,20 +292,32 @@ public class SystemUIV extends BaseLoad {
             isPadLoaded();
         } else {
             isPhoneLoaded();
+        }        initHook(() -> UnlockClipboard.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_unlock_clipboard"));
+        initHook(() -> new ToastBlur(), () -> PrefsBridge.getBoolean("system_framework_background_blur_toast"));
+        initHook(() -> new UnlockAlwaysOnDisplay(), () -> PrefsBridge.getBoolean("aod_unlock_always_on_display_hyper"));
+        initHook(() -> new FuckStatusbarGestures(), () -> PrefsBridge.getBoolean("system_ui_move_log_to_miui"));
+
+        if (PrefsBridge.getBoolean("misound_bluetooth")) {
+            initHook(() -> new AutoSEffSwitchForSystemUi());
+        }
+
+        if (isPad()) {
+            isPadLoaded();
+        } else {
+            isPhoneLoaded();
         }
     }
 
     private void isPhoneLoaded() {
-        initHook(SwapWiFiAndMobileNetwork.INSTANCE, PrefsBridge.getBoolean("system_ui_status_bar_swap_wifi_and_mobile_network"));
+        initHook(() -> SwapWiFiAndMobileNetwork.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_status_bar_swap_wifi_and_mobile_network"));
         // 移动网络图标
         boolean isEnabledDualRowSignal = PrefsBridge.getBoolean("system_ui_statusbar_network_icon_enable");
-        initHook(new DualRowSignalHookV(), isEnabledDualRowSignal && !(
+        initHook(() -> new DualRowSignalHookV(), () -> isEnabledDualRowSignal && !(
                 PrefsBridge.getStringAsInt("system_ui_status_bar_icon_mobile_network_signal_mode", 0) != 0 ||
                 PrefsBridge.getBoolean("system_ui_status_bar_icon_mobile_network_hide_card_1") ||
                 PrefsBridge.getBoolean("system_ui_status_bar_icon_mobile_network_hide_card_2")
-            )
-        );
-        initHook(new MobilePublicHookV(), isEnabledDualRowSignal ||
+            ));
+        initHook(() -> new MobilePublicHookV(), () -> isEnabledDualRowSignal ||
             PrefsBridge.getStringAsInt("system_ui_status_bar_icon_mobile_network_signal_mode", 0) != 0 ||
             PrefsBridge.getBoolean("system_ui_status_bar_icon_mobile_network_hide_card_1") ||
             PrefsBridge.getBoolean("system_ui_status_bar_icon_mobile_network_hide_card_2") ||
@@ -313,17 +325,17 @@ public class SystemUIV extends BaseLoad {
             PrefsBridge.getBoolean("system_ui_status_bar_mobile_indicator") ||
             PrefsBridge.getStringAsInt("system_ui_status_bar_icon_small_hd", 0) != 0 ||
             PrefsBridge.getStringAsInt("system_ui_status_bar_icon_big_hd", 0) != 0);
-        initHook(MobileTypeSingle2Hook.INSTANCE, isEnabledDualRowSignal ||
+        initHook(() -> MobileTypeSingle2Hook.INSTANCE, () -> isEnabledDualRowSignal ||
             PrefsBridge.getStringAsInt("system_ui_status_bar_icon_show_mobile_network_type", 0) != 0 ||
             PrefsBridge.getBoolean("system_ui_statusbar_mobile_type_enable"));
-        initHook(MobileTypeTextCustom.INSTANCE, !Objects.equals(PrefsBridge.getString("system_ui_status_bar_mobile_type_custom", ""), ""));
+        initHook(() -> MobileTypeTextCustom.INSTANCE, () -> !Objects.equals(PrefsBridge.getString("system_ui_status_bar_mobile_type_custom", ""), ""));
 
         // 磁贴
-        initHook(new FiveGTile(), PrefsBridge.getStringAsInt("system_control_center_5g_new_tile", 0) != 0);
+        initHook(() -> new FiveGTile(), () -> PrefsBridge.getStringAsInt("system_control_center_5g_new_tile", 0) != 0);
     }
 
     private void isPadLoaded() {
         // Other
-        initHook(DisableInfinitymodeGesture.INSTANCE, PrefsBridge.getBoolean("system_ui_disable_infinitymode_gesture"));
+        initHook(() -> DisableInfinitymodeGesture.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_disable_infinitymode_gesture"));
     }
 }

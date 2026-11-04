@@ -91,8 +91,8 @@ final class DashboardFuncHintHelper {
             return preference.isEnabled();
         }
 
-        // 已确认包存在且版本不在支持区间，只有这种情况才允许清理该组配置。
-        disableAndClearPreference(preference);
+        // Capability checks affect availability, never the user's saved configuration.
+        disablePreference(preference);
         applySummary(preference, rule.value);
         return false;
     }
@@ -109,13 +109,9 @@ final class DashboardFuncHintHelper {
     }
 
     /**
-     * 版本已在支持区间外：置灰并清理该 key 已存的配置。
+     * 版本已在支持区间外：置灰并保留已存配置。
      */
-    private void disableAndClearPreference(@NonNull Preference preference) {
-        String key = preference.getKey();
-        if (!TextUtils.isEmpty(key)) {
-            mHost.cleanKey(key);
-        }
+    private void disablePreference(@NonNull Preference preference) {
         preference.setEnabled(false);
     }
 

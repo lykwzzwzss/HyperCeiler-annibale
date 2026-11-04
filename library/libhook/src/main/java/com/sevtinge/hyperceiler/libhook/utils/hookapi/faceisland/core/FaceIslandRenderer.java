@@ -99,9 +99,6 @@ public final class FaceIslandRenderer extends View {
         if (!belongsToCurrentTree(validation)) {
             return;
         }
-        if (notifyVisible && this.side == 1) {
-            this.controller.onRendererVisible(this.cycle, this.viewGen);
-        }
         FaceIslandSnapshot first = this.controller.snapshot();
         if (!belongsToCurrentTree(first)) {
             return;
@@ -121,6 +118,9 @@ public final class FaceIslandRenderer extends View {
             drawFace(canvas, frame);
         }
         canvas.restore();
+        if (notifyVisible && this.side == 1) {
+            this.controller.onRendererVisible(this.cycle, this.viewGen);
+        }
         if (actuallyVisible && isAnimating(frame, first)) {
             postInvalidateOnAnimation();
         }

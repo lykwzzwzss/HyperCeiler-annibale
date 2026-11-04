@@ -31,9 +31,9 @@ public class ScreenRecorder extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new ForceSupportPlaybackCapture(), PrefsBridge.getBoolean("screenrecorder_force_support_playback_capture"));
-        initHook(UnlockMoreVolumeFromNew.INSTANCE, PrefsBridge.getBoolean("screenrecorder_more_volume"));
-        initHook(new ScreenRecorderConfig(), PrefsBridge.getBoolean("screenrecorder_config"));
-        initHook(SaveToMovies.INSTANCE, PrefsBridge.getBoolean("screenrecorder_save_to_movies"));
+        initHook(() -> new ForceSupportPlaybackCapture(), () -> PrefsBridge.getBoolean("screenrecorder_force_support_playback_capture"));
+        initHook(() -> UnlockMoreVolumeFromNew.INSTANCE, () -> PrefsBridge.getBoolean("screenrecorder_more_volume"));
+        initHook(() -> new ScreenRecorderConfig(), () -> PrefsBridge.getBoolean("screenrecorder_config"));
+        initHook(() -> SaveToMovies.INSTANCE, () -> PrefsBridge.getBoolean("screenrecorder_save_to_movies"));
     }
 }

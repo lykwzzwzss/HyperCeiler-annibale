@@ -30,6 +30,6 @@ import java.util.Objects;
 public class Lpa extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(new CustomImei(), !Objects.equals(PrefsBridge.getString("lpa_custom_imei", ""), ""));
+        initHook(() -> new CustomImei(), () -> !Objects.equals(PrefsBridge.getString("lpa_custom_imei", ""), ""));
     }
 }

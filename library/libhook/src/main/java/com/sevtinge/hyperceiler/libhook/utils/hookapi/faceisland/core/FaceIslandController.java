@@ -17,6 +17,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 public final class FaceIslandController {
     static final String DEBUG_KEY = "face_island_debug_preview";
@@ -72,6 +74,13 @@ public final class FaceIslandController {
     private final FaceIslandEntryState entryState = new FaceIslandEntryState();
     private int appliedWidthPercent = -1;
     private int appliedIconEdgeOffsetDp = -1;
+    private String appliedGlyphMode;
+    private long scheduledCloseAt = -1;
+    private final Runnable closeDeadline = () -> {
+        scheduledCloseAt = -1;
+        try { refresh(SystemClock.elapsedRealtime()); }
+        catch (Throwable error) { XposedLog.w("FaceIslandCtl", "dismiss refresh failed", error); }
+    };
     private long lastPublishMs = -10000;
     private long lastShowRequest = -1;
     private long latestAuthRequest = -1;
@@ -174,16 +183,11 @@ public final class FaceIslandController {
             if (optionalField instanceof Context) {
                 this.context = (Context) optionalField;
             }
-            if (!this.started) {
-                this.started = true;
-                this.enabled = FaceIslandCompat.isSupportedDevice() && FaceIslandPrefs.moduleEnabled();
-                if (this.enabled) {
-                    this.main.post(this.heartbeat);
-                }
-                return;
-            }
+            this.enabled = FaceIslandCompat.isSupportedDevice() && FaceIslandPrefs.moduleEnabled();
+            if (this.enabled) resumeHeartbeat();
             return;
         }
+        if (!this.enabled || !FaceIslandHooks.isEnabled()) return;
         if (j < this.invalidatedAtMs || j2 < this.invalidationSequence.get()) {
             return;
         }
@@ -504,8 +508,9 @@ public final class FaceIslandController {
             replayWakeEvents(now, longValue);
         }
         replayFingerprint(now);
-        if (this.state.active && !this.showing && this.state.goingAwayMs < 0) {
-            this.state.goingAway(now);
+        if (this.state.active && !this.asleep
+            && (!this.showing || FaceIslandReflect.boolField(this.mediator, "mHiding"))) {
+            this.state.dismissed(now, FaceIslandPrefs.desktopExitHoldMs());
         }
     }
 
@@ -563,11 +568,14 @@ public final class FaceIslandController {
     private void refreshActiveGeometry() {
         int width = FaceIslandPrefs.widthPercent();
         int offset = FaceIslandPrefs.iconEdgeOffsetDp();
-        if (width == this.appliedWidthPercent && offset == this.appliedIconEdgeOffsetDp) {
+        String glyphMode = FaceIslandPrefs.successGlyphMode();
+        if (width == this.appliedWidthPercent && offset == this.appliedIconEdgeOffsetDp
+            && glyphMode.equals(this.appliedGlyphMode)) {
             return;
         }
         this.appliedWidthPercent = width;
         this.appliedIconEdgeOffsetDp = offset;
+        this.appliedGlyphMode = glyphMode;
         if (this.data != null) {
             removePublished();
             this.lastPublishMs = -10000L;
@@ -667,6 +675,12 @@ public final class FaceIslandController {
             removePublished();
         }
         invalidateRenderers();
+        long deadline = this.state.active ? this.state.closeAtMs : -1;
+        if (deadline != this.scheduledCloseAt) {
+            this.main.removeCallbacks(this.closeDeadline);
+            this.scheduledCloseAt = deadline;
+            if (deadline >= 0) this.main.postDelayed(this.closeDeadline, Math.max(0, deadline - now));
+        }
     }
 
     private Object content() throws Exception {
@@ -683,6 +697,11 @@ public final class FaceIslandController {
     }
 
     private void ensurePublished(long now) throws Exception {
+        if (!FaceIslandHooks.isPluginReady()) {
+            FaceIslandNativeFaceVisibility.setSuppressed(false);
+            if (this.data != null) removePublished();
+            return;
+        }
         Object real;
         String str;
         boolean registered;
@@ -794,6 +813,7 @@ public final class FaceIslandController {
     }
 
     private void removePublished() {
+        FaceIslandNativeFaceVisibility.setSuppressed(false);
         final Object old = this.publishedContent;
         final String oldKey = this.publishedKey == null ? KEY : this.publishedKey;
         boolean oldDebugPreview = DEBUG_KEY.equals(oldKey);
@@ -914,8 +934,26 @@ public final class FaceIslandController {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             task.run();
         } else {
-            controller.main.post(task);
+            FutureTask<Void> completion = new FutureTask<>(task, null);
+            controller.main.post(completion);
+            try { completion.get(2, TimeUnit.SECONDS); }
+            catch (Exception error) {
+                completion.cancel(false);
+                throw new IllegalStateException("Face island main-thread cleanup did not complete", error);
+            }
         }
+    }
+
+    public static void preferencesChanged() {
+        FaceIslandController controller = INSTANCE;
+        Runnable update = () -> {
+            if (!controller.enabled) return;
+            controller.state.updateExitHold(FaceIslandPrefs.desktopExitHoldMs());
+            try { controller.refresh(SystemClock.elapsedRealtime()); }
+            catch (Throwable error) { XposedLog.w("FaceIslandCtl", "preference refresh failed", error); }
+        };
+        if (Looper.myLooper() == Looper.getMainLooper()) update.run();
+        else controller.main.post(update);
     }
 
     /** 设置开关关闭后的 kill-switch：停掉已发布的岛与退场浮层。 */
@@ -962,6 +1000,8 @@ public final class FaceIslandController {
     private void stopRunningState(String reason) {
         this.main.removeCallbacksAndMessages(null);
         this.started = false;
+        this.scheduledCloseAt = -1;
+        FaceIslandNativeFaceVisibility.setSuppressed(false);
         this.previewToken++;
         this.debugPreview = false;
         cancelSleepExit();
@@ -1000,6 +1040,9 @@ public final class FaceIslandController {
 
     public void onRendererVisible(long cycle, long generation) {
         if (isCurrent(cycle) && generation == this.state.viewGen) {
+            if (!this.debugPreview && FaceIslandHooks.isPluginReady()) {
+                FaceIslandNativeFaceVisibility.setSuppressed(true);
+            }
             long now = SystemClock.elapsedRealtime();
             this.state.visible(cycle, generation, now);
         }
@@ -1020,51 +1063,30 @@ public final class FaceIslandController {
     }
 
     public void retry() {
-        boolean running;
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            this.main.post(new Runnable() { // from class: com.android.systemui.faceisland.FaceIslandController.5
-                @Override
-                public void run() {
-                    FaceIslandController.this.retry();
-                }
-            });
+            this.main.post(this::retry);
             return;
         }
-        if (this.debugPreview) {
-            return;
-        }
+        if (!this.enabled || this.debugPreview || !FaceIslandHooks.isPluginReady()) return;
         long now = SystemClock.elapsedRealtime();
         try {
             syncSystem(now);
             this.cancellation = readFlowBool(this.repository, "cancellationInProgress");
-            if (!readFlowBool(this.repository, "_isAuthRunning") && !readFlowBool(this.repository, "_isDetectRunning")) {
-                running = false;
-                if (!this.state.active && !this.state.successLatched && this.state.goingAwayMs < 0
-                    && this.showing && !this.displaySuppressed && !running && !this.cancellation
-                    && !this.retryPending && !this.asleep) {
-                    Object interactor = FaceIslandReflect.field(this.monitor, "mFaceAuthInteractor");
-                    Class<?> eventType = Class.forName("com.android.systemui.deviceentry.shared.FaceAuthUiEvent",
-                        true, this.monitor.getClass().getClassLoader());
-                    Object event = eventType.getField("FACE_AUTH_USER_CLICK_FACE_ICON").get(null);
-                    this.retryPending = true;
-                    this.retryAtMs = now;
-                    FaceIslandReflect.call(interactor, "runFaceAuth", event, false);
-                }
-                return;
-            }
-            running = true;
-            if (!this.state.active) {
-                return;
-            }
-            Object interactor2 = FaceIslandReflect.field(this.monitor, "mFaceAuthInteractor");
-            Class<?> eventType2 = Class.forName("com.android.systemui.deviceentry.shared.FaceAuthUiEvent",
+            if (!this.state.active || this.state.successLatched || this.state.goingAwayMs >= 0
+                || !this.showing || this.displaySuppressed || this.asleep || this.cancellation
+                || this.retryPending || FaceIslandReflect.boolField(this.mediator, "mHiding")
+                || readFlowBool(this.repository, "_isAuthRunning")
+                || readFlowBool(this.repository, "_isDetectRunning")) return;
+            Object interactor = FaceIslandReflect.field(this.monitor, "mFaceAuthInteractor");
+            Class<?> eventType = Class.forName("com.android.systemui.deviceentry.shared.FaceAuthUiEvent",
                 true, this.monitor.getClass().getClassLoader());
-            Object event2 = eventType2.getField("FACE_AUTH_USER_CLICK_FACE_ICON").get(null);
+            Object event = eventType.getField("FACE_AUTH_USER_CLICK_FACE_ICON").get(null);
             this.retryPending = true;
             this.retryAtMs = now;
-            FaceIslandReflect.call(interactor2, "runFaceAuth", event2, false);
-        } catch (Throwable th) {
+            FaceIslandReflect.call(interactor, "runFaceAuth", event, false);
+        } catch (Throwable error) {
             this.retryPending = false;
+            XposedLog.w("FaceIslandCtl", "face retry failed", error);
         }
     }
 
@@ -1100,6 +1122,12 @@ public final class FaceIslandController {
             return true;
         }
         try {
+            if (!FaceIslandHooks.isPluginReady()) return false;
+            if (controller.debugPreview) return false;
+            if (SystemClock.elapsedRealtime() < controller.debugPreviewSuppressedUntilMs) return false;
+            // Do not overwrite a real lock-screen authentication with a settings preview.
+            if (FaceIslandReflect.boolField(controller.mediator, "mShowing")
+                && controller.state.active) return false;
             if (controller.mediator == null || controller.monitor == null || controller.islandOwner == null) {
                 XposedLog.w("FaceIslandCtl", "preview bind missing: mediator=" + (controller.mediator != null)
                     + " monitor=" + (controller.monitor != null)

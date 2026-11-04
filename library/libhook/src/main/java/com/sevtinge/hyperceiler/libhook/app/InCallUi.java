@@ -29,7 +29,7 @@ public class InCallUi extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new HideCrbt(), PrefsBridge.getBoolean("incallui_hide_crbt"));
-        initHook(new AnswerInHeadUp(), PrefsBridge.getBoolean("incallui_answer_in_head_up"));
+        initHook(() -> new HideCrbt(), () -> PrefsBridge.getBoolean("incallui_hide_crbt"));
+        initHook(() -> new AnswerInHeadUp(), () -> PrefsBridge.getBoolean("incallui_answer_in_head_up"));
     }
 }

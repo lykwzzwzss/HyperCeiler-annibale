@@ -23,6 +23,7 @@ import android.view.View;
 
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.faceisland.FaceIslandCompat;
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.faceisland.core.FaceIslandHooks;
+import com.sevtinge.hyperceiler.libhook.utils.hookapi.faceisland.core.FaceIslandNativeFaceVisibility;
 
 import io.github.lingqiqi5211.ezhooktool.xposed.common.HookParam;
 import io.github.lingqiqi5211.ezhooktool.xposed.java.IMethodHook;
@@ -64,17 +65,14 @@ public class FaceIslandNativeFaceRule extends FaceIslandRuleBase {
         }
         IMethodHook visibility = new IMethodHook() {
             @Override
-            public void before(HookParam param) {
+            public void after(HookParam param) {
                 View view = (View) param.getThisObject();
                 if (!isFaceView(view)) {
                     return;
                 }
                 Object[] args = argsOf(param);
                 int requested = number(args, 0, -1);
-                int normalized = FaceIslandHooks.normalizeNativeFaceVisibility(requested);
-                if (normalized != requested) {
-                    args[0] = normalized;
-                }
+                FaceIslandNativeFaceVisibility.record(view, requested);
             }
         };
         hook(faceView, "setVisibility", 1, visibility);

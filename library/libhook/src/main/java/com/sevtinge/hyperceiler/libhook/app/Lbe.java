@@ -31,10 +31,10 @@ public class Lbe extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new AutoStart(), PrefsBridge.getBoolean("lbe_auto_start"));
+        initHook(() -> new AutoStart(), () -> PrefsBridge.getBoolean("lbe_auto_start"));
 
         // paste toast
-        initHook(new PasteToast(), PrefsBridge.getBoolean("lbe_paste_toast_custom"));
+        initHook(() -> new PasteToast(), () -> PrefsBridge.getBoolean("lbe_paste_toast_custom"));
 
 
     }

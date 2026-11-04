@@ -85,7 +85,7 @@ public class InstallIntercept extends BaseHook {
             XposedLog.e(TAG, getPackageName(),
                     "DexKit anchor not found: install intercept enabled, skip hook");
         }
-        return true;
+        return mInstallMethod != null;
     }
 
     @Override

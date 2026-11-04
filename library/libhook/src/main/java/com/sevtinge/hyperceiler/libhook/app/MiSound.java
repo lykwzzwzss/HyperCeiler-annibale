@@ -29,6 +29,6 @@ public class MiSound extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new NewAutoSEffSwitch(), PrefsBridge.getBoolean("misound_bluetooth"));
+        initHook(() -> new NewAutoSEffSwitch(), () -> PrefsBridge.getBoolean("misound_bluetooth"));
     }
 }

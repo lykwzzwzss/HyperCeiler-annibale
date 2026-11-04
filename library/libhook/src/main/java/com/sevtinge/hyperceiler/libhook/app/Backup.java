@@ -29,7 +29,7 @@ public class Backup extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new UnlockBrokenScreenBackup(), PrefsBridge.getBoolean("backup_unlock_broken_screen_backup"));
-        initHook(new AllowBackupAllApps(), PrefsBridge.getBoolean("backup_allow_all_apps"));
+        initHook(() -> new UnlockBrokenScreenBackup(), () -> PrefsBridge.getBoolean("backup_unlock_broken_screen_backup"));
+        initHook(() -> new AllowBackupAllApps(), () -> PrefsBridge.getBoolean("backup_allow_all_apps"));
     }
 }

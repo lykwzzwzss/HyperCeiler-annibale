@@ -23,11 +23,13 @@ import androidx.annotation.NonNull;
 import com.sevtinge.hyperceiler.common.log.AndroidLog;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class ShellUtils {
     /**
@@ -282,6 +284,61 @@ public class ShellUtils {
             }
         }
         return true;
+    }
+
+    /** A bounded command for UI state transitions; timeout terminates the actual su process. */
+    public static String rootExecCmd(String cmd, long timeoutMs) {
+        if (!isSafeCommand(cmd)) throw new IllegalArgumentException("Unsafe root command");
+        if (timeoutMs <= 0) throw new IllegalArgumentException("timeoutMs must be positive");
+        Process process = null;
+        try {
+            String seconds = Long.toString(Math.max(1, (timeoutMs + 999) / 1000));
+            String quoted = "'" + cmd.replace("'", "'\\''") + "'";
+            String command = "nsenter --mount=/proc/1/ns/mnt -- /system/bin/timeout -k 1 "
+                + seconds + " /system/bin/sh -c " + quoted;
+            process = new ProcessBuilder("su", "-c", command).redirectErrorStream(true).start();
+            final Process running = process;
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            Thread reader = new Thread(() -> {
+                try (var stream = running.getInputStream()) {
+                    byte[] buffer = new byte[1024];
+                    int count;
+                    while ((count = stream.read(buffer)) >= 0) {
+                        synchronized (output) {
+                            if (output.size() < 8192) output.write(buffer, 0, Math.min(count, 8192 - output.size()));
+                        }
+                    }
+                } catch (IOException ignored) {
+                    // Closing/terminating the process is also how a timeout ends this reader.
+                }
+            }, "HyperCeiler-root-output");
+            reader.setDaemon(true);
+            reader.start();
+            if (!process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)) {
+                throw new IllegalStateException("Root command timed out after " + timeoutMs + "ms");
+            }
+            reader.join(200);
+            if (process.exitValue() != 0) throw new IllegalStateException("Root command exit=" + process.exitValue());
+            synchronized (output) { return output.toString(StandardCharsets.UTF_8).trim(); }
+        } catch (IOException error) {
+            throw new IllegalStateException("Root command could not start", error);
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Root command cancelled", error);
+        } finally {
+            if (process != null) {
+                if (process.isAlive()) {
+                    process.destroyForcibly();
+                    try { process.waitFor(500, TimeUnit.MILLISECONDS); }
+                    catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); }
+                }
+                try {
+                    process.getInputStream().close();
+                    process.getErrorStream().close();
+                    process.getOutputStream().close();
+                } catch (IOException ignored) { }
+            }
+        }
     }
 
     public static String rootExecCmd(String cmd) {

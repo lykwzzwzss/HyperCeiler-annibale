@@ -17,7 +17,7 @@ val gitHash: String by lazy { runGitCommand("rev-parse", "--short", "HEAD") ?: "
 val gitHashLong: String by lazy { runGitCommand("rev-parse", "HEAD") ?: "unknown" }
 // 浅克隆时 `git rev-list --count` 只数得到可见提交，versionCode 会骤降到 5 左右并导致
 // 无法覆盖安装。这里给一个不低于当前已发布值的下界，可用 versionCodeFallback 覆盖。
-val versionCodeFloor = providers.gradleProperty("versionCodeFallback").orNull?.toIntOrNull() ?: 4753
+val versionCodeFloor = providers.gradleProperty("versionCodeFallback").orNull?.toIntOrNull() ?: 4761
 val gitCommitCount: Int by lazy {
     runGitCommand("rev-list", "--count", "HEAD")?.toIntOrNull()?.takeIf { it > 0 } ?: 0
 }

@@ -28,6 +28,6 @@ public class Creation extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(UnlockCreation.INSTANCE, PrefsBridge.getBoolean("creation_unlock_enable"));
+        initHook(() -> UnlockCreation.INSTANCE, () -> PrefsBridge.getBoolean("creation_unlock_enable"));
     }
 }

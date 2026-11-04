@@ -45,42 +45,41 @@ public class PackageInstaller extends BaseLoad {
     public void onPackageLoaded() {
 
         //
-        /*initHook(new MiuiPackageInstallModify(), PrefsBridge.getBoolean("miui_package_installer_modify"));*/
+        /*initHook(() -> new MiuiPackageInstallModify(), () -> PrefsBridge.getBoolean("miui_package_installer_modify"));*/
 
         // 禁用广告
-        initHook(new DisableAd(), PrefsBridge.getBoolean("miui_package_installer_disable_ad"));
-        initHook(DisableInstallCancelRecommendation.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_disable_ad"));
+        initHook(() -> new DisableAd(), () -> PrefsBridge.getBoolean("miui_package_installer_disable_ad"));
+        initHook(() -> DisableInstallCancelRecommendation.INSTANCE, () -> PrefsBridge.getBoolean("miui_package_installer_disable_ad"));
 
         // 禁用风险检测
-        initHook(InstallRiskDisable.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_install_risk"));
-        initHook(DisableAnonymousSourceWarning.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_install_risk"));
+        initHook(() -> InstallRiskDisable.INSTANCE, () -> PrefsBridge.getBoolean("miui_package_installer_install_risk"));
+        initHook(() -> DisableAnonymousSourceWarning.INSTANCE, () -> PrefsBridge.getBoolean("miui_package_installer_install_risk"));
 
         // 阻断云端配置下发
-        initHook(DisableCloudCheck.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_disable_cloud_check"));
+        initHook(() -> DisableCloudCheck.INSTANCE, () -> PrefsBridge.getBoolean("miui_package_installer_disable_cloud_check"));
         // Offline risk dialog is a separate installer path from SafeModeTipViewObject.
-        initHook(DisableOfflineInstallWarning.INSTANCE,
-            PrefsBridge.getBoolean("miui_package_installer_disable_cloud_check"));
+        initHook(() -> DisableOfflineInstallWarning.INSTANCE, () -> PrefsBridge.getBoolean("miui_package_installer_disable_cloud_check"));
 
         // 禁用安全守护提示
-        initHook(DisableSafeModelTip.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_safe_model_tip"));
-        initHook(DisableDefaultSafetyReminder.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_safe_model_tip"));
+        initHook(() -> DisableSafeModelTip.INSTANCE, () -> PrefsBridge.getBoolean("miui_package_installer_safe_model_tip"));
+        initHook(() -> DisableDefaultSafetyReminder.INSTANCE, () -> PrefsBridge.getBoolean("miui_package_installer_safe_model_tip"));
 
         // 允许更新系统应用
-        initHook(AllAsSystemApp.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_update_system_app"));
+        initHook(() -> AllAsSystemApp.INSTANCE, () -> PrefsBridge.getBoolean("miui_package_installer_update_system_app"));
 
         // 自定义安装来源：默认为空 = 不修改系统行为
-        initHook(new InstallSource(), !TextUtils.isEmpty(PrefsBridge.getString("miui_package_installer_install_source", "")));
+        initHook(() -> new InstallSource(), () -> !TextUtils.isEmpty(PrefsBridge.getString("miui_package_installer_install_source", "")));
 
         // 显示更多安装包信息
-        // initHook(new DisplayMoreApkInfo(), PrefsBridge.getBoolean("miui_package_installer_apk_info"));
-        initHook(DisplayMoreApkInfoNew.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_apk_info"));
-        initHook(new DisableInstallerFullSafeVersion(), PrefsBridge.getBoolean("miui_package_installer_apk_info"));
+        // initHook(() -> new DisplayMoreApkInfo(), () -> PrefsBridge.getBoolean("miui_package_installer_apk_info"));
+        initHook(() -> DisplayMoreApkInfoNew.INSTANCE, () -> PrefsBridge.getBoolean("miui_package_installer_apk_info"));
+        initHook(() -> new DisableInstallerFullSafeVersion(), () -> PrefsBridge.getBoolean("miui_package_installer_apk_info"));
 
         // 禁用频繁安装应用检查
-        initHook(DisableCountChecking.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_count_checking"));
+        initHook(() -> DisableCountChecking.INSTANCE, () -> PrefsBridge.getBoolean("miui_package_installer_count_checking"));
 
         // 禁用安装前后上传应用信息, 开启后会无法扫描病毒
-        initHook(DisableAppInfoUpload.INSTANCE, PrefsBridge.getBoolean("miui_package_installer_upload_appinfo"));
+        initHook(() -> DisableAppInfoUpload.INSTANCE, () -> PrefsBridge.getBoolean("miui_package_installer_upload_appinfo"));
 
     }
 }

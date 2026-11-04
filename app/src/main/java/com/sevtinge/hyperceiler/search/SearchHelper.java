@@ -174,12 +174,9 @@ public class SearchHelper {
                         String keyAttr = xml.getAttributeValue(ANDROID_NS, "key");
                         String isVisibleAttr = xml.getAttributeValue(APP_NS, "isPreferenceVisible");
                         String childFragment = xml.getAttributeValue(ANDROID_NS, "fragment");
-                        String persistentAttr = xml.getAttributeValue(ANDROID_NS, "persistent");
 
                         String modTitle = resolveStringRef(res, titleAttr);
                         boolean isHidden = "false".equals(isVisibleAttr);
-                        // persistent=false 的动作项（如编辑入口、预览按钮）不是可搜索的设置项
-                        boolean isActionOnly = "false".equals(persistentAttr);
 
                         if (childFragment != null) {
                             int childXml = getXmlResIdFromFragment(childFragment);
@@ -189,8 +186,7 @@ public class SearchHelper {
                             }
                         }
 
-                        if (!TextUtils.isEmpty(modTitle) && !TextUtils.isEmpty(keyAttr) && !isHidden
-                            && !isActionOnly) {
+                        if (!TextUtils.isEmpty(modTitle) && !TextUtils.isEmpty(keyAttr) && !isHidden) {
                             ModEntity mod = new ModEntity();
                             mod.title = modTitle;
                             mod.key = keyAttr;

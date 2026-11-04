@@ -28,6 +28,9 @@ import com.sevtinge.hyperceiler.libhook.utils.hookapi.faceisland.plugin.FaceIsla
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import io.github.libxposed.api.XposedInterface;
 import java.util.WeakHashMap;
 
 import io.github.lingqiqi5211.ezhooktool.xposed.common.HookParam;
@@ -42,83 +45,104 @@ public class FaceIslandPluginRule extends FaceIslandRuleBase {
     private static final int PART_LEFT = 0;
     private static final int PART_RIGHT = 1;
     private static final int PART_CUTOUT = 2;
-    private static final int STEP_TEMPLATE_FACTORY = 0;
-    private static final int STEP_WINDOW_CONTROLLER = 1;
-    private static final int STEP_BASE_CONTENT = 2;
-    private static final int STEP_CONTENT = 3;
-    private static final int STEP_COUNT = 4;
-    private static final Map<ClassLoader, InstallState> INSTALLED =
-        Collections.synchronizedMap(new WeakHashMap<>());
+    public static final String LOADER_STATE_KEY = "FaceIsland.pluginLoader";
+    private static final Map<ClassLoader, List<XposedInterface.HookHandle>> INSTALLED =
+        new WeakHashMap<>();
+    private static final ThreadLocal<List<XposedInterface.HookHandle>> INSTALLING = new ThreadLocal<>();
 
     @Override
-    public void init() {
-        // 由 NewPluginHelperKt 在动态岛插件加载后调用 install(loader) 安装。
-    }
+    public void init() {}
 
-    /** 热重载清理：允许新 generation 重新安装插件侧 hook。 */
-    public static void reset() {
+    public static synchronized void reset() {
+        FaceIslandHooks.setPluginReady(false);
+        for (List<XposedInterface.HookHandle> handles : INSTALLED.values()) unhook(handles);
         INSTALLED.clear();
     }
 
-    /**
-     * 分批安装，已成功的部分不会重装；中途失败后下一次调用只补没装完的部分。
-     */
+    /** Validate the complete contract before changing any plugin behavior. */
     public static synchronized boolean install(ClassLoader loader) {
-        if (loader == null || !FaceIslandHooks.isEnabled()) {
-            return false;
-        }
-        InstallState state = INSTALLED.get(loader);
-        if (state == null) {
-            state = new InstallState();
-            INSTALLED.put(loader, state);
-        }
-        if (state.done) {
+        if (loader == null || !FaceIslandHooks.isEnabled()) return false;
+        if (INSTALLED.containsKey(loader)) {
+            FaceIslandHooks.setPluginReady(true);
             return true;
         }
-        boolean success = installStep(state, loader, STEP_TEMPLATE_FACTORY, "template_factory",
-            FaceIslandPluginRule::hookTemplateFactory);
-        success &= installStep(state, loader, STEP_WINDOW_CONTROLLER, "window_controller",
-            FaceIslandPluginRule::hookWindowController);
-        success &= installStep(state, loader, STEP_BASE_CONTENT, "base_content",
-            FaceIslandPluginRule::hookBaseContent);
-        success &= installStep(state, loader, STEP_CONTENT, "content",
-            FaceIslandPluginRule::hookContent);
-        if (success && !state.done) {
-            state.done = true;
-            XposedLog.i("FaceIslandPlugin", "plugin hooks installed");
-        }
-        return success;
-    }
-
-    private static boolean installStep(InstallState state, ClassLoader loader, int step, String name,
-                                       HookStep action) {
-        if (state.installed[step]) {
-            return true;
-        }
+        FaceIslandHooks.setPluginReady(false);
+        List<XposedInterface.HookHandle> handles = new ArrayList<>();
         try {
-            action.install(loader);
-            state.installed[step] = true;
+            validate(loader, "miui.systemui.dynamicisland.template.IslandTemplateFactory",
+                "createBigIslandTemplate/7", "createSmallIslandTemplate/7", "showView/2", "hideView/2",
+                "updateLeftWidth/3", "updateRightWidth/3", "updateCutoutWidth/3", "removeTemplate/1");
+            validate(loader, "miui.systemui.dynamicisland.window.DynamicIslandWindowViewController",
+                "removeDynamicIslandView/2", "getBigIslandRect/2", "getExpandedIslandRect/1",
+                "getIslandTemplate/1", "setCancelTimeout/2");
+            validate(loader, "miui.systemui.dynamicisland.window.content.DynamicIslandBaseContentView",
+                "getBigIslandViewWidth/0", "getBigIslandViewWidthHasSmallIsland/0",
+                "getCurrentBigIslandWidth/1", "getBigIslandX/0", "getBigIslandXHasSmallIsland/0",
+                "getCurrentBigIslandX/1");
+            validate(loader, "miui.systemui.dynamicisland.window.content.DynamicIslandContentView",
+                "onIslandClick/0", "onInterceptTouchEvent/1");
+            INSTALLING.set(handles);
+            hookTemplateFactory(loader);
+            hookWindowController(loader);
+            hookBaseContent(loader);
+            hookContent(loader);
+            for (List<XposedInterface.HookHandle> old : INSTALLED.values()) unhook(old);
+            INSTALLED.clear();
+            INSTALLED.put(loader, handles);
+            putHotReloadRuntimeState(LOADER_STATE_KEY, loader);
+            FaceIslandHooks.setPluginReady(true);
+            XposedLog.i("FaceIslandPlugin", "plugin hooks installed: " + handles.size());
             return true;
         } catch (Throwable error) {
-            XposedLog.w("FaceIslandPlugin", "plugin hooks failed at " + name + ": " + error);
+            unhook(handles);
+            FaceIslandHooks.setPluginReady(false);
+            XposedLog.e("FaceIslandPlugin", "plugin unavailable; native face display retained", error);
             return false;
+        } finally {
+            INSTALLING.remove();
         }
     }
 
-    private interface HookStep {
-        void install(ClassLoader loader) throws Throwable;
+    private static void unhook(List<XposedInterface.HookHandle> handles) {
+        for (XposedInterface.HookHandle handle : handles) {
+            try { handle.unhook(); }
+            catch (Throwable error) { XposedLog.w("FaceIslandPlugin", "unhook failed", error); }
+        }
     }
 
-    private static final class InstallState {
-        final boolean[] installed = new boolean[STEP_COUNT];
-        boolean done;
+    private static Method requireMethod(Class<?> type, String name, int count) {
+        if (type == null) throw new IllegalStateException("Missing plugin class for " + name);
+        Method found = null;
+        for (Method method : type.getDeclaredMethods()) {
+            if (method.getName().equals(name) && method.getParameterCount() == count
+                    && !method.isBridge() && !method.isSynthetic()) {
+                if (found != null) throw new IllegalStateException("Ambiguous plugin method: " + name);
+                found = method;
+            }
+        }
+        if (found == null) throw new IllegalStateException(type.getName() + "#" + name + "/" + count);
+        return found;
+    }
+
+    private static void validate(ClassLoader loader, String className, String... signatures) {
+        Class<?> type = find(className, loader);
+        for (String signature : signatures) {
+            int split = signature.lastIndexOf('/');
+            requireMethod(type, signature.substring(0, split), Integer.parseInt(signature.substring(split + 1)));
+        }
+    }
+
+    static Method hook(Class<?> type, String name, int count, IMethodHook callback) {
+        Method method = requireMethod(type, name, count);
+        XposedInterface.HookHandle handle = hookMethod(method, callback);
+        if (handle == null) throw new IllegalStateException("Hook installation failed: " + method);
+        INSTALLING.get().add(handle);
+        return method;
     }
 
     private static void hookTemplateFactory(ClassLoader loader) {
         Class<?> factory = find("miui.systemui.dynamicisland.template.IslandTemplateFactory", loader);
-        if (factory == null) {
-            return;
-        }
+        if (factory == null) throw new IllegalStateException("Template factory missing");
         hook(factory, "createBigIslandTemplate", 7, new IMethodHook() {
             @Override
             public void before(HookParam param) {
@@ -164,9 +188,7 @@ public class FaceIslandPluginRule extends FaceIslandRuleBase {
 
     private static void hookWindowController(ClassLoader loader) {
         Class<?> window = find("miui.systemui.dynamicisland.window.DynamicIslandWindowViewController", loader);
-        if (window == null) {
-            return;
-        }
+        if (window == null) throw new IllegalStateException("Window controller missing");
         hook(window, "removeDynamicIslandView", 2, new IMethodHook() {
             @Override
             public void after(HookParam param) {
@@ -199,9 +221,7 @@ public class FaceIslandPluginRule extends FaceIslandRuleBase {
     private static void hookBaseContent(ClassLoader loader) {
         Class<?> content = find(
             "miui.systemui.dynamicisland.window.content.DynamicIslandBaseContentView", loader);
-        if (content == null) {
-            return;
-        }
+        if (content == null) throw new IllegalStateException("Plugin content missing");
         hook(content, "getBigIslandViewWidth", 0, scaleResultHook(false));
         hook(content, "getBigIslandViewWidthHasSmallIsland", 0, scaleResultHook(false));
         hook(content, "getCurrentBigIslandWidth", 1, scaleResultHook(false));
@@ -212,9 +232,7 @@ public class FaceIslandPluginRule extends FaceIslandRuleBase {
 
     private static void hookContent(ClassLoader loader) {
         Class<?> content = find("miui.systemui.dynamicisland.window.content.DynamicIslandContentView", loader);
-        if (content == null) {
-            return;
-        }
+        if (content == null) throw new IllegalStateException("Plugin content missing");
         hook(content, "onIslandClick", 0, new IMethodHook() {
             @Override
             public void before(HookParam param) {

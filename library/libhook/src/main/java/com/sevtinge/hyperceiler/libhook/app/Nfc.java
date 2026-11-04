@@ -29,7 +29,7 @@ public class Nfc extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new DisableSound(), PrefsBridge.getBoolean("nfc_disable_sound"));
-        initHook(new AllowInformationScreen(), PrefsBridge.getBoolean("nfc_allow_information_screen"));
+        initHook(() -> new DisableSound(), () -> PrefsBridge.getBoolean("nfc_disable_sound"));
+        initHook(() -> new AllowInformationScreen(), () -> PrefsBridge.getBoolean("nfc_allow_information_screen"));
     }
 }

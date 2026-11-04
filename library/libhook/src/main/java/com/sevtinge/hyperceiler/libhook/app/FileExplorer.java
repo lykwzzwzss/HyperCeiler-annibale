@@ -29,7 +29,7 @@ public class FileExplorer extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new UnlockFileParse(), PrefsBridge.getBoolean("file_explorer_unlock_file_parse"));
-        initHook(SelectName.INSTANCE, PrefsBridge.getBoolean("file_explorer_can_selectable") || PrefsBridge.getBoolean("file_explorer_is_single_line"));
+        initHook(() -> new UnlockFileParse(), () -> PrefsBridge.getBoolean("file_explorer_unlock_file_parse"));
+        initHook(() -> SelectName.INSTANCE, () -> PrefsBridge.getBoolean("file_explorer_can_selectable") || PrefsBridge.getBoolean("file_explorer_is_single_line"));
     }
 }

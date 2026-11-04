@@ -32,10 +32,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
@@ -315,11 +313,12 @@ public abstract class BaseLoad {
     private void initHookFromFactory(Supplier<BaseHook> hookFactory, BooleanSupplier condition) {
         BaseHook hook = null;
         try {
+            if (!condition.getAsBoolean()) return;
             hook = hookFactory.get();
             if (!mPendingDexKitHooks.isEmpty()) {
                 flushPendingDexKitHooks();
             }
-            initHookInternal(hook, condition.getAsBoolean());
+            initHookInternal(hook, true);
         } catch (Throwable t) {
             logHookFailure(hook, t);
         }
@@ -348,27 +347,12 @@ public abstract class BaseLoad {
         }
 
         List<DexKitInitResult> results = new ArrayList<>(pendingHooks.size());
-        for (int i = 0; i < futures.size(); i++) {
-            BaseHook hook = pendingHooks.get(i);
-            try {
-                results.add(futures.get(i).get(15, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                results.add(new DexKitInitResult(hook, false, e));
-            } catch (TimeoutException e) {
-                // DexKit 解析卡住时取消该批次剩余任务并跳过，避免阻塞目标进程启动
-                TimeoutException timeout = new TimeoutException("initDexKit timed out after 15s");
-                futures.get(i).cancel(true);
-                results.add(new DexKitInitResult(hook, false, timeout));
-                for (int j = i + 1; j < futures.size(); j++) {
-                    futures.get(j).cancel(true);
-                    results.add(new DexKitInitResult(pendingHooks.get(j), false, timeout));
-                }
-                break;
-            } catch (ExecutionException e) {
-                Throwable cause = e.getCause() != null ? e.getCause() : e;
-                results.add(new DexKitInitResult(hook, false, cause));
-            }
+        List<HookInitializationBatch.Result<DexKitInitResult>> completed =
+            HookInitializationBatch.collect(futures, 15, TimeUnit.SECONDS);
+        for (int i = 0; i < completed.size(); i++) {
+            HookInitializationBatch.Result<DexKitInitResult> result = completed.get(i);
+            results.add(result.error() == null ? result.value()
+                : new DexKitInitResult(pendingHooks.get(i), false, result.error()));
         }
 
         for (DexKitInitResult result : results) {
@@ -408,14 +392,19 @@ public abstract class BaseLoad {
         int success = BaseHook.getHookSuccessCount() - successBefore;
         int failure = BaseHook.getHookFailureCount() - failureBefore;
         if (success > 0) {
-            XposedLog.i(hook.TAG, getPackageName(), "Hook Success"
-                + (failure > 0 ? " (" + success + " success, " + failure + " failed)" : ""));
+            if (failure > 0) {
+                logHookFailure(hook, new IllegalStateException(
+                    "Hook partially installed: " + success + " installed, " + failure + " failed"));
+            } else {
+                XposedLog.i(hook.TAG, getPackageName(), "Hook Success (" + success + " installed)");
+            }
         } else if (failure > 0) {
             logHookFailure(hook, new IllegalStateException(
                 "No hook installed: " + failure + " findAndHookMethod call(s) failed"));
         } else {
-            // 使用 EzHookTool DSL 等无法统计次数的规则，保留原有成功日志
-            XposedLog.i(hook.TAG, getPackageName(), "Hook Success");
+            // Deferred registrations and DSL hooks need separate runtime evidence.
+            XposedLog.i(hook.TAG, getPackageName(),
+                "Hook status unverified: no tracked installation (deferred, DSL, or unsupported)");
         }
     }
 

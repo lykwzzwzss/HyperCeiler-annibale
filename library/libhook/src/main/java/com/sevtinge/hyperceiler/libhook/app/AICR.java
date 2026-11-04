@@ -28,6 +28,6 @@ public class AICR extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(ChangeBrowserForAIEngine.INSTANCE, PrefsBridge.getBoolean("aicr_modify_browser_copy"));
+        initHook(() -> ChangeBrowserForAIEngine.INSTANCE, () -> PrefsBridge.getBoolean("aicr_modify_browser_copy"));
     }
 }

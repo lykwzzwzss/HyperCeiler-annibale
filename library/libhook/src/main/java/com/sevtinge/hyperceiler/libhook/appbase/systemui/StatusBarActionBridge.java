@@ -23,6 +23,7 @@ import android.content.Intent;
 
 import com.sevtinge.hyperceiler.common.log.AndroidLog;
 import com.sevtinge.hyperceiler.libhook.base.BaseHook;
+import com.sevtinge.hyperceiler.libhook.utils.api.BroadcastSenderGuard;
 
 public final class StatusBarActionBridge {
     // Keep this bridge limited to actions with real receiver handling.
@@ -73,7 +74,7 @@ public final class StatusBarActionBridge {
 
     private static boolean sendBroadcast(Context context, Intent intent) {
         try {
-            context.sendBroadcast(intent);
+            BroadcastSenderGuard.send(context, intent, "com.android.systemui");
             return true;
         } catch (Throwable t) {
             AndroidLog.w("StatusBarActionBridge", "systemui", "sendBroadcast", t);

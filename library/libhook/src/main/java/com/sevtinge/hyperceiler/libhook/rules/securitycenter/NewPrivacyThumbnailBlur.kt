@@ -14,7 +14,7 @@ object NewPrivacyThumbnailBlur : BaseHook() {
         if (thumbnailBlur.isEmpty()) {
             XposedLog.e(TAG, packageName, "DexKit anchor not found: privacy thumbnail blur")
         }
-        return true
+        return thumbnailBlur.isNotEmpty()
     }
 
     private val thumbnailBlur by lazy<List<Method>> {

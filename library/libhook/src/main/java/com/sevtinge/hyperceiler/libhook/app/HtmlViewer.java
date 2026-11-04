@@ -27,6 +27,6 @@ import com.sevtinge.hyperceiler.libhook.rules.htmlviewer.DisableUpdateCloudAllDa
 public class HtmlViewer extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(new DisableUpdateCloudAllData(), PrefsBridge.getBoolean("html_viewer_disable_cloud_control"));
+        initHook(() -> new DisableUpdateCloudAllData(), () -> PrefsBridge.getBoolean("html_viewer_disable_cloud_control"));
     }
 }

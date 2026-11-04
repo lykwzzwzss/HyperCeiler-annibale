@@ -57,7 +57,7 @@ final class DashboardPreferencePageLockHelper {
     }
 
     /**
-     * 已确认版本但超出支持区间（或模块被修改）时使用：整页置灰并清理该组配置。
+     * 已确认版本不受支持或模块被修改时置灰整页，保留已存配置。
      */
     void lock(@Nullable Preference warningPreference, @Nullable Integer warningTitleResId) {
         String warningKey = ensureWarningPreference(warningPreference, warningTitleResId);
@@ -114,16 +114,12 @@ final class DashboardPreferencePageLockHelper {
             boolean isWarningBanner = !TextUtils.isEmpty(warningKey) && TextUtils.equals(warningKey, key);
             if (isWarningBanner) continue;
 
-            if (!TextUtils.isEmpty(key)) {
-                mHost.cleanKey(key);
-            }
             preference.setEnabled(false);
         }
     }
 
     /**
-     * 版本不可查时整页置灰：与 {@link #disableGroup(PreferenceGroup, String)} 的区别是不清理 key，
-     * 用户换回受支持的版本后原配置仍然可用。
+     * 版本不可查时整页置灰，同样保留配置，便于恢复支持后继续使用。
      */
     private void greyOutGroup(@NonNull PreferenceGroup group, @Nullable String warningKey) {
         for (int i = 0; i < group.getPreferenceCount(); i++) {

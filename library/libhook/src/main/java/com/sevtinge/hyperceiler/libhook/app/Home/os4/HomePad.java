@@ -32,7 +32,7 @@ public class HomePad extends BaseLoad {
     @Override
     public void onPackageLoaded() {
         NativeHomeHooksOS4.INSTANCE.init();
-        initHook(HomeSettingsOS4.INSTANCE, true);
+        initHook(() -> HomeSettingsOS4.INSTANCE, () -> true);
         boolean gesturesEnabled = PrefsBridge.getBoolean("home_gesture_enable");
         boolean hasTouchGesture = PrefsBridge.getInt("home_gesture_double_tap_action", 0) > 0
             || PrefsBridge.getInt("home_gesture_up_swipe_action", 0) > 0
@@ -41,9 +41,9 @@ public class HomePad extends BaseLoad {
             || PrefsBridge.getInt("home_gesture_down_swipe2_action", 0) > 0;
 
         // OS4 dock background is installed by SystemFrameworkB (HomeDockWindow).
-        initHook(HomeGestureOS4.INSTANCE, gesturesEnabled && hasTouchGesture);
-        initHook(new ShakeDevice(), gesturesEnabled
+        initHook(() -> HomeGestureOS4.INSTANCE, () -> gesturesEnabled && hasTouchGesture);
+        initHook(() -> new ShakeDevice(), () -> gesturesEnabled
             && PrefsBridge.getInt("home_gesture_shake_action", 0) > 0);
-        initHook(new HomePortraitReverse(), PrefsBridge.getBoolean("home_other_portrait_reverse"));
+        initHook(() -> new HomePortraitReverse(), () -> PrefsBridge.getBoolean("home_other_portrait_reverse"));
     }
 }

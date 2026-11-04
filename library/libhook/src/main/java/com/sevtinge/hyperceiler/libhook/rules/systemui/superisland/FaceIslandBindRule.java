@@ -32,6 +32,7 @@ import com.sevtinge.hyperceiler.libhook.utils.hookapi.faceisland.core.FaceIsland
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.faceisland.core.FaceIslandController;
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.faceisland.core.FaceIslandHooks;
 import com.sevtinge.hyperceiler.libhook.utils.hookapi.faceisland.plugin.FaceIslandExitBridge;
+import com.sevtinge.hyperceiler.libhook.utils.api.BroadcastSenderGuard;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -53,6 +54,7 @@ public class FaceIslandBindRule extends FaceIslandRuleBase {
         }
         registerHotReloadCleanups();
         FaceIslandHooks.watchEnabledPreference();
+        restoreBindings();
         hookLargestConstructor(find("com.android.systemui.deviceentry.data.repository.DeviceEntryFaceAuthRepositoryImpl"),
             new IMethodHook() {
                 @Override
@@ -88,11 +90,26 @@ public class FaceIslandBindRule extends FaceIslandRuleBase {
      * 热重载时旧 generation 的控制器、退场浮层与静态缓存都必须复位。
      */
     private static void registerHotReloadCleanups() {
-        registerHotReloadCleanup(FaceIslandController::shutdown);
-        registerHotReloadCleanup(FaceIslandHooks::reset);
-        registerHotReloadCleanup(FaceIslandExitBridge::reset);
-        registerHotReloadCleanup(FaceIslandArtwork::release);
-        registerHotReloadCleanup(FaceIslandPluginRule::reset);
+        registerHotReloadCleanup(() -> {
+            FaceIslandController.shutdown();
+            FaceIslandHooks.reset();
+            FaceIslandArtwork.release();
+            FaceIslandPluginRule.reset();
+        });
+    }
+
+    private static void restoreBindings() {
+        Object repository = getHotReloadRuntimeState(FaceIslandHooks.BINDING_PREFIX + "repository", Object.class);
+        Object monitor = getHotReloadRuntimeState(FaceIslandHooks.BINDING_PREFIX + "monitor", Object.class);
+        Object mediator = getHotReloadRuntimeState(FaceIslandHooks.BINDING_PREFIX + "mediator", Object.class);
+        Object island = getHotReloadRuntimeState(FaceIslandHooks.BINDING_PREFIX + "island", Object.class);
+        if (repository != null) FaceIslandHooks.bindRepository(repository);
+        if (monitor != null) FaceIslandHooks.bindMonitor(monitor);
+        if (mediator != null) {
+            FaceIslandHooks.bindMediator(mediator);
+            registerPreviewReceiver(previewContext(mediator));
+        }
+        if (island != null) FaceIslandHooks.bindIsland(island);
     }
 
     private static Context previewContext(Object mediator) {
@@ -129,7 +146,8 @@ public class FaceIslandBindRule extends FaceIslandRuleBase {
             BroadcastReceiver receiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context ctx, Intent intent) {
-                    if (!FaceIslandContract.ACTION_PREVIEW.equals(intent.getAction())) {
+                    if (intent == null || !FaceIslandContract.ACTION_PREVIEW.equals(intent.getAction())
+                        || !BroadcastSenderGuard.isFromModule(this, ctx)) {
                         return;
                     }
                     boolean started = FaceIslandController.beginPreview();
@@ -137,7 +155,8 @@ public class FaceIslandBindRule extends FaceIslandRuleBase {
                 }
             };
             IntentFilter filter = new IntentFilter(FaceIslandContract.ACTION_PREVIEW);
-            ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_EXPORTED);
+            ContextCompat.registerReceiver(context, receiver, filter,
+                BroadcastSenderGuard.PERMISSION, null, ContextCompat.RECEIVER_EXPORTED);
             registerReceiverHotReloadCleanup(context, receiver);
             registerHotReloadCleanup(() -> {
                 sReceiver = null;

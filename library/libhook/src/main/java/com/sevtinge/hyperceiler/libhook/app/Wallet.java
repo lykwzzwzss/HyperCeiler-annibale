@@ -28,6 +28,6 @@ import com.sevtinge.hyperceiler.libhook.rules.wallet.DisableSplashAd;
 public class Wallet extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(new DisableSplashAd(), PrefsBridge.getBoolean("wallet_disable_splash_ad"));
+        initHook(() -> new DisableSplashAd(), () -> PrefsBridge.getBoolean("wallet_disable_splash_ad"));
     }
 }

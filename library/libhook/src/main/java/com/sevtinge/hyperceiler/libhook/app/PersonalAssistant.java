@@ -31,11 +31,11 @@ public class PersonalAssistant extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        // initHook(new BlurOverlay(), false);
-        initHook(new DisableLiteVersion(), PrefsBridge.getBoolean("personal_assistant_disable_lite_version"));
-        initHook(new UnlockWidgetCountLimit(), PrefsBridge.getBoolean("personal_assistant_unlock_widget_count_limit"));
+        // initHook(() -> new BlurOverlay(), () -> false);
+        initHook(() -> new DisableLiteVersion(), () -> PrefsBridge.getBoolean("personal_assistant_disable_lite_version"));
+        initHook(() -> new UnlockWidgetCountLimit(), () -> PrefsBridge.getBoolean("personal_assistant_unlock_widget_count_limit"));
 
-        initHook(new WidgetBlurOpt(), PrefsBridge.getBoolean("personal_assistant_widget_widget_blur_opt"));
+        initHook(() -> new WidgetBlurOpt(), () -> PrefsBridge.getBoolean("personal_assistant_widget_widget_blur_opt"));
     }
 
 }

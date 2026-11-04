@@ -30,6 +30,6 @@ public class Analytics extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new FuckMiuiUpload(), PrefsBridge.getBoolean("analytics_fuck_guard"));
+        initHook(() -> new FuckMiuiUpload(), () -> PrefsBridge.getBoolean("analytics_fuck_guard"));
     }
 }

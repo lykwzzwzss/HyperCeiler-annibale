@@ -20,23 +20,19 @@ package com.sevtinge.hyperceiler.libhook.utils.api;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.app.BroadcastOptions;
 import android.os.Process;
-
-import java.lang.reflect.Method;
 
 /**
  * Entry guard for the exported action receivers that live inside SystemUI and system_server.
  *
- * <p>Those receivers are registered by the module, not declared in the host manifest, so they
- * cannot rely on a manifest permission. Two layers are used instead:
- * <ol>
- *   <li>registration requires {@link #PERMISSION}, a {@code signature} permission declared by the
- *       module package - an unrelated application does not hold it and its broadcast is dropped by
- *       the system before our code runs;</li>
- *   <li>the receiver re-checks the sending uid against the module signature, which also covers
- *       ROMs that ignore the registration permission.</li>
- * </ol>
+ * <p>Maintenance and preview receivers require {@link #PERMISSION}. Ordinary action receivers
+ * also serve hooks running in the system launcher, which cannot hold the module's signature
+ * permission. Those receivers require a shared sender identity and verify its UID against the
+ * module, the receiver host, privileged system callers, or the installed system launcher.
  */
 public final class BroadcastSenderGuard {
 
@@ -48,8 +44,6 @@ public final class BroadcastSenderGuard {
     private static final int UID_SYSTEM = 1000;
     private static final int UID_SHELL = 2000;
 
-    private static volatile Method getSendingUid;
-
     private BroadcastSenderGuard() {
     }
 
@@ -59,11 +53,17 @@ public final class BroadcastSenderGuard {
      */
     public static boolean isFromModule(BroadcastReceiver receiver, Context context) {
         int uid = sendingUid(receiver);
-        if (uid < 0) {
-            // Older platforms cannot report the sender; the registration permission still gates
-            // the broadcast, so there is nothing stronger to check here.
-            return true;
-        }
+        // This entry is only used behind PERMISSION. Older senders do not share their identity.
+        return uid < 0 || isModuleUid(uid, context);
+    }
+
+    /** Ordinary actions may also come from the installed system launcher. Fail closed. */
+    public static boolean isTrustedActionSender(BroadcastReceiver receiver, Context context) {
+        int uid = sendingUid(receiver);
+        return uid >= 0 && (isModuleUid(uid, context) || isSystemLauncher(uid, context));
+    }
+
+    private static boolean isModuleUid(int uid, Context context) {
         if (uid == UID_ROOT || uid == UID_SYSTEM || uid == UID_SHELL) {
             return true;
         }
@@ -72,11 +72,27 @@ public final class BroadcastSenderGuard {
         }
         try {
             int moduleUid = context.getPackageManager().getPackageUid(MODULE_PACKAGE, 0);
-            return context.getPackageManager().checkSignatures(uid, moduleUid)
-                == PackageManager.SIGNATURE_MATCH;
+            return uid == moduleUid;
         } catch (Throwable ignored) {
             return false;
         }
+    }
+
+    private static boolean isSystemLauncher(int uid, Context context) {
+        try {
+            ApplicationInfo launcher = context.getPackageManager()
+                .getApplicationInfo("com.miui.home", 0);
+            return launcher.uid == uid && (launcher.flags
+                & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
+        } catch (PackageManager.NameNotFoundException unavailable) {
+            return false;
+        }
+    }
+
+    /** Include the real sending UID; a Context/package-name extra cannot establish identity. */
+    public static void send(Context context, Intent intent, String targetPackage) {
+        context.sendBroadcast(intent.setPackage(targetPackage), null,
+            BroadcastOptions.makeBasic().setShareIdentityEnabled(true).toBundle());
     }
 
     private static int sendingUid(BroadcastReceiver receiver) {
@@ -84,12 +100,7 @@ public final class BroadcastSenderGuard {
             return -1;
         }
         try {
-            Method method = getSendingUid;
-            if (method == null) {
-                method = BroadcastReceiver.class.getMethod("getSendingUid");
-                getSendingUid = method;
-            }
-            return (Integer) method.invoke(receiver);
+            return receiver.getSentFromUid();
         } catch (Throwable ignored) {
             return -1;
         }

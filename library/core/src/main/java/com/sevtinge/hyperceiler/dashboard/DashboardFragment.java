@@ -198,7 +198,6 @@ public class DashboardFragment extends SettingsPreferenceFragment {
     public void setFuncHint(Preference p, int value) {
         // findPreference 在当前机型/版本下可能返回 null，直接忽略，避免强转或空引用。
         if (p == null) return;
-        cleanKey(p.getKey());
         p.setEnabled(false);
         switch (value) {
             case 1 -> p.setSummary(R.string.unsupported_system_func);
@@ -259,10 +258,7 @@ public class DashboardFragment extends SettingsPreferenceFragment {
     public void setPreVisible(Preference p, boolean b) {
         // 页面 XML 缺少该 key 时 findPreference 返回 null，这里直接返回而不是继续访问。
         if (p == null) return;
-        if (!b) {
-            cleanKey(p.getKey());
-            p.setVisible(false);
-        }
+        p.setVisible(b);
     }
 
     public void setAppModWarn(Preference p, String pkgName) {

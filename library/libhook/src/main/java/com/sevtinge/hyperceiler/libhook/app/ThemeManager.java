@@ -33,11 +33,11 @@ public class ThemeManager extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new AllowThirdTheme(), PrefsBridge.getBoolean("system_framework_allow_third_theme"));
-        initHook(new DisableThemeAdNew(), PrefsBridge.getBoolean("various_theme_disable_ads"));
-        initHook(new AllowDownloadMore(), PrefsBridge.getBoolean("theme_manager_allow_download_more"));
-        initHook(UnlockAIWallPaper.INSTANCE, PrefsBridge.getBoolean("theme_manager_unlock_ai_wallpaper"));
-        initHook(RingtonePickerUseFileBrowser.INSTANCE, RingtonePickerUseFileBrowser.INSTANCE.isEnabled());
+        initHook(() -> new AllowThirdTheme(), () -> PrefsBridge.getBoolean("system_framework_allow_third_theme"));
+        initHook(() -> new DisableThemeAdNew(), () -> PrefsBridge.getBoolean("various_theme_disable_ads"));
+        initHook(() -> new AllowDownloadMore(), () -> PrefsBridge.getBoolean("theme_manager_allow_download_more"));
+        initHook(() -> UnlockAIWallPaper.INSTANCE, () -> PrefsBridge.getBoolean("theme_manager_unlock_ai_wallpaper"));
+        initHook(() -> RingtonePickerUseFileBrowser.INSTANCE, () -> RingtonePickerUseFileBrowser.INSTANCE.isEnabled());
     }
 
 }

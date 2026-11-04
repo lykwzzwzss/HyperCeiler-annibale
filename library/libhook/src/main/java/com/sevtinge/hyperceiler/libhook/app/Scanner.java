@@ -34,12 +34,12 @@ public class Scanner extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new EnableOcr(), PrefsBridge.getBoolean("scanner_ocr"));
-        initHook(new EnableExcel(), PrefsBridge.getBoolean("scanner_excel"));
-        initHook(new EnablePpt(), PrefsBridge.getBoolean("scanner_ppt"));
-        initHook(new EnableCard(), PrefsBridge.getBoolean("scanner_card"));
-        initHook(new EnableTranslation(), PrefsBridge.getBoolean("scanner_translation"));
-        initHook(new EnableDocument(), PrefsBridge.getBoolean("scanner_document"));
-        initHook(new EnableDocPpt(), PrefsBridge.getBoolean("scanner_doc_ppt"));
+        initHook(() -> new EnableOcr(), () -> PrefsBridge.getBoolean("scanner_ocr"));
+        initHook(() -> new EnableExcel(), () -> PrefsBridge.getBoolean("scanner_excel"));
+        initHook(() -> new EnablePpt(), () -> PrefsBridge.getBoolean("scanner_ppt"));
+        initHook(() -> new EnableCard(), () -> PrefsBridge.getBoolean("scanner_card"));
+        initHook(() -> new EnableTranslation(), () -> PrefsBridge.getBoolean("scanner_translation"));
+        initHook(() -> new EnableDocument(), () -> PrefsBridge.getBoolean("scanner_document"));
+        initHook(() -> new EnableDocPpt(), () -> PrefsBridge.getBoolean("scanner_doc_ppt"));
     }
 }

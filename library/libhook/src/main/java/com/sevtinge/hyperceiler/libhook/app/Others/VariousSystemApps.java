@@ -39,9 +39,9 @@ public class VariousSystemApps extends BaseLoad {
     public void onPackageLoaded() {
         mPackageName = getPackageName();
         isMiuiApps = mPackageName.startsWith("com.miui") || mPackageName.startsWith("com.xiaomi") || miuiDialogCustomApps.contains(mPackageName);
-        initHook(new DialogCustom(), isMiuiDialogCustom());
-        initHook(new MiuiAppNoOverScroll(), isMiuiOverScrollApps());
-        initHook(new CollapseMiuiTitle(), isCollapseMiuiTitleApps());
+        initHook(() -> new DialogCustom(), () -> isMiuiDialogCustom());
+        initHook(() -> new MiuiAppNoOverScroll(), () -> isMiuiOverScrollApps());
+        initHook(() -> new CollapseMiuiTitle(), () -> isCollapseMiuiTitleApps());
     }
 
     private boolean isMiuiOverScrollApps() {

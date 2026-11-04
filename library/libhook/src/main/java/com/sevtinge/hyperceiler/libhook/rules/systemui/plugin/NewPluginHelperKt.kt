@@ -54,6 +54,8 @@ object NewPluginHelperKt : BaseHook() {
     }
 
     override fun init() {
+        getHotReloadRuntimeState(FaceIslandPluginRule.LOADER_STATE_KEY, ClassLoader::class.java)
+            ?.let { FaceIslandPluginRule.install(it) }
         // from hyperstar2.0
         /*loadClass("com.android.systemui.shared.plugins.PluginActionManager\$PluginContextWrapper")
             .constructors.first().createAfterHook {

@@ -13,6 +13,7 @@ public final class FaceIslandState {
     public boolean detectRunning;
     public boolean faceSuccess;
     private boolean hideRequested;
+    private boolean dismissalCommitted;
     public long round;
     public boolean successLatched;
     public long viewGen;
@@ -67,6 +68,7 @@ public final class FaceIslandState {
         this.successGlyphVisibleAtMs = -1L;
         this.successExitHoldMs = 800L;
         this.hideRequested = false;
+        this.dismissalCommitted = false;
         this.source = "NONE";
         this.authRequest = -1L;
         this.authStartedAt = -1L;
@@ -200,12 +202,28 @@ public final class FaceIslandState {
             return false;
         }
         this.hideRequested = false;
-        goingAway(now);
         return true;
     }
 
     public void cancelHideRequest() {
         this.hideRequested = false;
+        this.dismissalCommitted = false;
+        this.goingAwayMs = -1L;
+        this.closeAtMs = -1L;
+    }
+
+    /** The desktop hold starts when dismissal is committed, not when a face is accepted. */
+    public void dismissed(long now, long holdMs) {
+        if (!this.active) return;
+        if (!this.dismissalCommitted) this.goingAwayMs = now;
+        this.dismissalCommitted = true;
+        this.successExitHoldMs = clampSuccessExitHoldMs(holdMs);
+        goingAway(now);
+    }
+
+    public void updateExitHold(long holdMs) {
+        this.successExitHoldMs = clampSuccessExitHoldMs(holdMs);
+        recalculateClose();
     }
 
     public void goingAway(long now) {
@@ -227,6 +245,7 @@ public final class FaceIslandState {
     public void cancelExit(boolean authenticationValid, long now) {
         if (this.active) {
             this.hideRequested = false;
+            this.dismissalCommitted = false;
             this.closeAtMs = -1L;
             this.goingAwayMs = -1L;
             if (!authenticationValid) {
@@ -255,7 +274,7 @@ public final class FaceIslandState {
             this.closeAtMs = -1L;
             return;
         }
-        boolean z = this.successLatched;
+        boolean z = this.successLatched || this.dismissalCommitted;
         long j2 = this.goingAwayMs;
         if (z) {
             j = j2 + this.successExitHoldMs;

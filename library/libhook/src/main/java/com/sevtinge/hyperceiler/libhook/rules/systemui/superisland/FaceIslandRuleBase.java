@@ -51,8 +51,7 @@ abstract class FaceIslandRuleBase extends BaseHook {
         Method first = null;
         for (Method method : clazz.getDeclaredMethods()) {
             if (method.getName().equals(name) && method.getParameterCount() == count) {
-                hookMethod(method, callback);
-                if (first == null) {
+                if (hookMethod(method, callback) != null && first == null) {
                     first = method;
                 }
             }
@@ -69,8 +68,7 @@ abstract class FaceIslandRuleBase extends BaseHook {
         }
         for (Method method : clazz.getDeclaredMethods()) {
             if (method.getName().contains(namePart) && method.getParameterCount() == count) {
-                hookMethod(method, callback);
-                return method;
+                return hookMethod(method, callback) != null ? method : null;
             }
         }
         return null;
@@ -92,8 +90,7 @@ abstract class FaceIslandRuleBase extends BaseHook {
         Object[] args = new Object[target.getParameterCount() + 1];
         System.arraycopy(target.getParameterTypes(), 0, args, 0, target.getParameterCount());
         args[target.getParameterCount()] = callback;
-        findAndHookConstructor(clazz, args);
-        return target;
+        return findAndHookConstructor(clazz, args) != null ? target : null;
     }
 
     static int number(Object[] args, int index, int fallback) {

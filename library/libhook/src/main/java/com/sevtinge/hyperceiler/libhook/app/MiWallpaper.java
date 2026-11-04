@@ -28,6 +28,6 @@ public class MiWallpaper extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new UnlockSuperWallpaper(), PrefsBridge.getBoolean("miwallpaper_unlock_super_wallpaper"));
+        initHook(() -> new UnlockSuperWallpaper(), () -> PrefsBridge.getBoolean("miwallpaper_unlock_super_wallpaper"));
     }
 }

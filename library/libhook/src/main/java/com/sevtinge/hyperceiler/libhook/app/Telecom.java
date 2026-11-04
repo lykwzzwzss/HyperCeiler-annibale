@@ -27,6 +27,6 @@ import com.sevtinge.hyperceiler.common.utils.PrefsBridge;
 public class Telecom extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(new ScamReminderBypass(), PrefsBridge.getBoolean("scam_reminder_bypass"));
+        initHook(() -> new ScamReminderBypass(), () -> PrefsBridge.getBoolean("scam_reminder_bypass"));
     }
 }

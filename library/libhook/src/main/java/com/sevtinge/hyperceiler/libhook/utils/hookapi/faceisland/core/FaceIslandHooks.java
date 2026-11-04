@@ -23,15 +23,18 @@ import io.github.lingqiqi5211.ezhooktool.xposed.java.IMethodHook;
 public final class FaceIslandHooks {
     private static final Set<Class<?>> HOOKED = Collections.synchronizedSet(new HashSet<>());
     private static final AtomicBoolean ENABLED_WATCH_STARTED = new AtomicBoolean();
+    private static volatile boolean pluginReady;
+    public static final String BINDING_PREFIX = "FaceIsland.binding.";
     private static final SharedPreferences.OnSharedPreferenceChangeListener ENABLED_LISTENER =
         new SharedPreferences.OnSharedPreferenceChangeListener() {
             @Override
             public void onSharedPreferenceChanged(SharedPreferences preferences, String key) {
-                if (key != null && !key.contains(FaceIslandContract.KEY_ENABLED)) {
+                if (key != null && !key.startsWith("prefs_key_system_ui_face_island_")) {
                     return;
                 }
                 // 关开关后旧 controller 还在跑心跳，必须当场停用；重新打开时只要恢复心跳即可。
                 FaceIslandController.setEnabled(isEnabled());
+                FaceIslandController.preferencesChanged();
             }
         };
 
@@ -46,6 +49,17 @@ public final class FaceIslandHooks {
     /** 热重载清理：允许新 generation 重新安装回调 hook。 */
     public static void reset() {
         HOOKED.clear();
+        pluginReady = false;
+        FaceIslandNativeFaceVisibility.reset();
+    }
+
+    public static boolean isPluginReady() {
+        return pluginReady && isEnabled();
+    }
+
+    public static void setPluginReady(boolean ready) {
+        pluginReady = ready;
+        if (!ready) FaceIslandNativeFaceVisibility.setSuppressed(false);
     }
 
     /**
@@ -88,18 +102,22 @@ public final class FaceIslandHooks {
     }
 
     public static void bindRepository(Object owner) {
+        BaseHook.putHotReloadRuntimeState(BINDING_PREFIX + "repository", owner);
         send("BIND_REPOSITORY", owner, -1, 0, false, "");
     }
 
     public static void bindMonitor(Object owner) {
+        BaseHook.putHotReloadRuntimeState(BINDING_PREFIX + "monitor", owner);
         send("BIND_MONITOR", owner, -1, 0, false, "");
     }
 
     public static void bindMediator(Object owner) {
+        BaseHook.putHotReloadRuntimeState(BINDING_PREFIX + "mediator", owner);
         send("BIND_MEDIATOR", owner, -1, 0, false, "");
     }
 
     public static void bindIsland(Object owner) {
+        BaseHook.putHotReloadRuntimeState(BINDING_PREFIX + "island", owner);
         send("BIND_ISLAND", owner, -1, 0, false, "");
     }
 
@@ -505,22 +523,8 @@ public final class FaceIslandHooks {
     }
 
     public static void hideNativeFaceIcon(Object container, Object faceView) {
-        try {
-            if (container instanceof View) {
-                ((View) container).setVisibility(4);
-            }
-            if (faceView != null) {
-                FaceIslandReflect.call(faceView, "setVisibilityDirect", 4);
-            }
-        } catch (Throwable th) {
-        }
-    }
-
-    public static int normalizeNativeFaceVisibility(int requested) {
-        if (requested == 0) {
-            return 4;
-        }
-        return requested;
+        FaceIslandNativeFaceVisibility.track(container);
+        FaceIslandNativeFaceVisibility.track(faceView);
     }
 
     private static Object mediatorFromServiceCallback(Object callback) {

@@ -135,7 +135,7 @@ public class BypassAdbInstallVerify extends BaseHook {
             XposedLog.e(TAG, getPackageName(),
                     "DexKit anchor not found: AdbInstallCaller, skip caller bypass");
         }
-        return true;
+        return mAdbInstallNetworkVerifyMethod != null || mAdbInstallCallerMethod != null;
     }
 
     @Override

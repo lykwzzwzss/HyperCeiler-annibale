@@ -28,6 +28,20 @@ import com.sevtinge.hyperceiler.dashboard.DashboardFragment;
 
 public class HomeOtherSettings extends DashboardFragment {
 
+    private static final java.util.Set<String> OS4_UNAVAILABLE = java.util.Set.of(
+        "prefs_key_home_widget_all_widget_animation",
+        "prefs_key_home_widget_show_miui_widget",
+        "prefs_key_home_widget_allow_moved_to_minus_one_screen",
+        "prefs_key_home_other_freeform_shortcut_menu",
+        "prefs_key_home_other_tasks_shortcut_menu"
+    );
+
+    @Override
+    public boolean isPreferenceAvailableForSearch(String key) {
+        return !(isMoreHyperOSVersion(4f) && !isPad() && OS4_UNAVAILABLE.contains(key))
+            && super.isPreferenceAvailableForSearch(key);
+    }
+
     SwitchPreference mMoveToMinusOneScreen;
     SwitchPreference mWindowedMode;
     SwitchPreference mShareAPK;
@@ -65,6 +79,11 @@ public class HomeOtherSettings extends DashboardFragment {
 
         mEnableMoreSettings = findPreference("prefs_key_home_other_mi_pad_enable_more_setting");
         mEnableMoreSettings.setVisible(isPad() && !isMoreHyperOSVersion(3f));
+        if (isMoreHyperOSVersion(4f) && !isPad()) {
+            for (String key : OS4_UNAVAILABLE) {
+                setFuncHint(findPreference(key), 1);
+            }
+        }
     }
 
 }

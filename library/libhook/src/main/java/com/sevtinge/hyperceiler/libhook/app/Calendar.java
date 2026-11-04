@@ -28,6 +28,6 @@ public class Calendar extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new UnlockSubscription(), PrefsBridge.getBoolean("calendar_unlock_subscription"));
+        initHook(() -> new UnlockSubscription(), () -> PrefsBridge.getBoolean("calendar_unlock_subscription"));
     }
 }

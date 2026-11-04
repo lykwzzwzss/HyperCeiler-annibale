@@ -57,51 +57,51 @@ public class SystemSettingsV extends BaseLoad {
     @Override
     public void onPackageLoaded() {
         // 首页
-        initHook(new HyperCeilerSettings(), PrefsBridge.getStringAsInt("settings_icon", 0) != 0);
-        initHook(new InternationalBuild(), PrefsBridge.getBoolean("system_settings_international_build"));
-        initHook(UnlockXiaomiHyperAIEntranceKt.INSTANCE, PrefsBridge.getBoolean("system_settings_unlock_xiaomihyperai_entrance"));
-        initHook(new AddGoogleListHeader(), PrefsBridge.getBoolean("system_settings_unlock_google_header"));
+        initHook(() -> new HyperCeilerSettings(), () -> PrefsBridge.getStringAsInt("settings_icon", 0) != 0);
+        initHook(() -> new InternationalBuild(), () -> PrefsBridge.getBoolean("system_settings_international_build"));
+        initHook(() -> UnlockXiaomiHyperAIEntranceKt.INSTANCE, () -> PrefsBridge.getBoolean("system_settings_unlock_xiaomihyperai_entrance"));
+        initHook(() -> new AddGoogleListHeader(), () -> PrefsBridge.getBoolean("system_settings_unlock_google_header"));
 
         // 系统更新伪装版本
-        initHook(new ModifySystemVersion(), PrefsBridge.getBoolean("updater_enable_miui_version") && PrefsBridge.getStringAsInt("updater_version_mode", 1) != 1);
+        initHook(() -> new ModifySystemVersion(), () -> PrefsBridge.getBoolean("updater_enable_miui_version") && PrefsBridge.getStringAsInt("updater_version_mode", 1) != 1);
 
         // VPN / 网络连接与共享
-        initHook(new ViewWifiPasswordHook(), PrefsBridge.getBoolean("system_settings_safe_wifi"));
-        initHook(new LinkTurbo(), PrefsBridge.getBoolean("system_settings_linkturbo"));
-        initHook(new NewNFCPage(), PrefsBridge.getBoolean("system_settings_new_nfc_page"));
-        initHook(new MoreVpnTypes(), PrefsBridge.getBoolean("system_settings_more_vpn_types"));
+        initHook(() -> new ViewWifiPasswordHook(), () -> PrefsBridge.getBoolean("system_settings_safe_wifi"));
+        initHook(() -> new LinkTurbo(), () -> PrefsBridge.getBoolean("system_settings_linkturbo"));
+        initHook(() -> new NewNFCPage(), () -> PrefsBridge.getBoolean("system_settings_new_nfc_page"));
+        initHook(() -> new MoreVpnTypes(), () -> PrefsBridge.getBoolean("system_settings_more_vpn_types"));
 
         // 特色功能
-        initHook(UnlockTaplusForSettings.INSTANCE, PrefsBridge.getBoolean("content_extension_unlock_taplus"));
+        initHook(() -> UnlockTaplusForSettings.INSTANCE, () -> PrefsBridge.getBoolean("content_extension_unlock_taplus"));
 
         // 显示与息屏
-        initHook(new UnlockNeverSleepScreen(), PrefsBridge.getBoolean("system_settings_allow_never_lock_screen"));
-        initHook(new UnlockSuperResolution(), PrefsBridge.getBoolean("system_settings_ai_image_unlock_sr"));
-        initHook(new UnlockAi(), PrefsBridge.getBoolean("system_settings_ai_image_unlock_ai"));
-        initHook(new UnlockMemc(), PrefsBridge.getBoolean("system_settings_ai_image_unlock_memc"));
+        initHook(() -> new UnlockNeverSleepScreen(), () -> PrefsBridge.getBoolean("system_settings_allow_never_lock_screen"));
+        initHook(() -> new UnlockSuperResolution(), () -> PrefsBridge.getBoolean("system_settings_ai_image_unlock_sr"));
+        initHook(() -> new UnlockAi(), () -> PrefsBridge.getBoolean("system_settings_ai_image_unlock_ai"));
+        initHook(() -> new UnlockMemc(), () -> PrefsBridge.getBoolean("system_settings_ai_image_unlock_memc"));
 
         // 权限
-        initHook(new MoreNotificationSettings(), PrefsBridge.getBoolean("system_settings_more_notification_settings"));
-        initHook(new QuickManageOverlayPermission(), PrefsBridge.getBoolean("system_settings_permission_show_app_up"));
-        initHook(new QuickManagerAccessibilityPermission(), PrefsBridge.getBoolean("system_settings_permission_accessibility"));
+        initHook(() -> new MoreNotificationSettings(), () -> PrefsBridge.getBoolean("system_settings_more_notification_settings"));
+        initHook(() -> new QuickManageOverlayPermission(), () -> PrefsBridge.getBoolean("system_settings_permission_show_app_up"));
+        initHook(() -> new QuickManagerAccessibilityPermission(), () -> PrefsBridge.getBoolean("system_settings_permission_accessibility"));
 
         // 开发者选项
-        initHook(new UsbModeChoose(), PrefsBridge.getStringAsInt("system_settings_usb_mode_choose", 0) != 0
+        initHook(() -> new UsbModeChoose(), () -> PrefsBridge.getStringAsInt("system_settings_usb_mode_choose", 0) != 0
             || PrefsBridge.getBoolean("system_settings_usb_mode"));
-        initHook(new AppsFreezerEnable(), PrefsBridge.getBoolean("system_settings_apps_freezer"));
-        initHook(UnlockMaxFps.INSTANCE, PrefsBridge.getBoolean("system_settings_develop_max_fps"));
-        initHook(new EnableSpeedMode(), PrefsBridge.getBoolean("system_settings_develop_speed_mode"));
+        initHook(() -> new AppsFreezerEnable(), () -> PrefsBridge.getBoolean("system_settings_apps_freezer"));
+        initHook(() -> UnlockMaxFps.INSTANCE, () -> PrefsBridge.getBoolean("system_settings_develop_max_fps"));
+        initHook(() -> new EnableSpeedMode(), () -> PrefsBridge.getBoolean("system_settings_develop_speed_mode"));
 
         // Others
-        initHook(new AntiQues(), PrefsBridge.getBoolean("system_settings_anti_ques"));
-        initHook(new AllowManageAllNotifications(), PrefsBridge.getBoolean("system_framework_allow_manage_all_notifications"));
-        initHook(new RunningServices(), true); // 显示原生内存信息
-        // initHook(new BluetoothRestrict(), PrefsBridge.getBoolean("various_disable_bluetooth_restrict"));
-        initHook(new ControlCenterStyle(), PrefsBridge.getBoolean("system_control_center_unlock_old"));
-        initHook(NoveltyHaptic.INSTANCE, PrefsBridge.getBoolean("system_settings_novelty_haptic"));
+        initHook(() -> new AntiQues(), () -> PrefsBridge.getBoolean("system_settings_anti_ques"));
+        initHook(() -> new AllowManageAllNotifications(), () -> PrefsBridge.getBoolean("system_framework_allow_manage_all_notifications"));
+        initHook(() -> new RunningServices(), () -> true); // 显示原生内存信息
+        // initHook(() -> new BluetoothRestrict(), () -> PrefsBridge.getBoolean("various_disable_bluetooth_restrict"));
+        initHook(() -> new ControlCenterStyle(), () -> PrefsBridge.getBoolean("system_control_center_unlock_old"));
+        initHook(() -> NoveltyHaptic.INSTANCE, () -> PrefsBridge.getBoolean("system_settings_novelty_haptic"));
 
         if (isPad()) {
-            initHook(new ShowAutoUIMode(), PrefsBridge.getBoolean("system_settings_unlock_ui_mode"));
+            initHook(() -> new ShowAutoUIMode(), () -> PrefsBridge.getBoolean("system_settings_unlock_ui_mode"));
         }
     }
 }

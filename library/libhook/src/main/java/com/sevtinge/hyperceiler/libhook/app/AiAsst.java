@@ -12,7 +12,7 @@ public class AiAsst extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(NewAiCaptions.INSTANCE, PrefsBridge.getBoolean("aiasst_ai_captions"));
-        initHook(UnlockSplitTranslation.INSTANCE, PrefsBridge.getBoolean("aiasst_unlock_split_screen_translation"));
+        initHook(() -> NewAiCaptions.INSTANCE, () -> PrefsBridge.getBoolean("aiasst_ai_captions"));
+        initHook(() -> UnlockSplitTranslation.INSTANCE, () -> PrefsBridge.getBoolean("aiasst_unlock_split_screen_translation"));
     }
 }

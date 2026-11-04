@@ -33,12 +33,12 @@ public class GetApps extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new BypassRiskCheck(), PrefsBridge.getBoolean("market_bypass_risk_check"));
-        initHook(new DisableAds(), PrefsBridge.getBoolean("market_disable_ads"));
+        initHook(() -> new BypassRiskCheck(), () -> PrefsBridge.getBoolean("market_bypass_risk_check"));
+        initHook(() -> new DisableAds(), () -> PrefsBridge.getBoolean("market_disable_ads"));
         GetAppsDeviceConfig deviceConfig = GetAppsDeviceConfig.from(PrefsBridge.getSharedPreferences().getAll());
-        initHook(new DeviceModify(deviceConfig), deviceConfig.enabled && deviceConfig.hasOverrides());
+        initHook(() -> new DeviceModify(deviceConfig), () -> deviceConfig.enabled && deviceConfig.hasOverrides());
 
-        initHook(DisablePackageMonitor.INSTANCE, PrefsBridge.getBoolean("market_package_monitor"));
-        initHook(DisableStartPushDialog.INSTANCE, PrefsBridge.getBoolean("market_disable_start_push_dialog"));
+        initHook(() -> DisablePackageMonitor.INSTANCE, () -> PrefsBridge.getBoolean("market_package_monitor"));
+        initHook(() -> DisableStartPushDialog.INSTANCE, () -> PrefsBridge.getBoolean("market_disable_start_push_dialog"));
     }
 }

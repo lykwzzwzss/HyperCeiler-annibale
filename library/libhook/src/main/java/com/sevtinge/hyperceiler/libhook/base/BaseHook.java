@@ -79,22 +79,24 @@ public abstract class BaseHook {
     public final String TAG = getClass().getSimpleName();
     private volatile boolean mInDexKitInit = false;
     // 供 BaseLoad 判断单条规则是否真的安装成功后打印成功日志
-    private static final AtomicInteger sHookSuccessCount = new AtomicInteger();
-    private static final AtomicInteger sHookFailureCount = new AtomicInteger();
+    private static final ThreadLocal<AtomicInteger> sHookSuccessCount =
+        ThreadLocal.withInitial(AtomicInteger::new);
+    private static final ThreadLocal<AtomicInteger> sHookFailureCount =
+        ThreadLocal.withInitial(AtomicInteger::new);
 
     public static int getHookSuccessCount() {
-        return sHookSuccessCount.get();
+        return sHookSuccessCount.get().get();
     }
 
     public static int getHookFailureCount() {
-        return sHookFailureCount.get();
+        return sHookFailureCount.get().get();
     }
 
     private static XposedInterface.HookHandle trackHookResult(@Nullable XposedInterface.HookHandle handle) {
         if (handle != null) {
-            sHookSuccessCount.incrementAndGet();
+            sHookSuccessCount.get().incrementAndGet();
         } else {
-            sHookFailureCount.incrementAndGet();
+            sHookFailureCount.get().incrementAndGet();
         }
         return handle;
     }
@@ -103,9 +105,9 @@ public abstract class BaseHook {
         @Nullable List<XposedInterface.HookHandle> handles
     ) {
         if (handles != null && !handles.isEmpty()) {
-            sHookSuccessCount.addAndGet(handles.size());
+            sHookSuccessCount.get().addAndGet(handles.size());
         } else {
-            sHookFailureCount.incrementAndGet();
+            sHookFailureCount.get().incrementAndGet();
         }
         return handles;
     }

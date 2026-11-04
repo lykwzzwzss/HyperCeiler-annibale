@@ -207,14 +207,23 @@ internal object DexKitCacheManager {
      * 由每次 Hook 会话结束时的 [DexKit.close] 调用。
      */
     fun releaseBridge() {
-        synchronized(lock) {
-            cache?.flush()
-            bridge?.close()
+        val retired = synchronized(lock) {
+            val value = bridge to cache
             bridge = null
             target = null
-
-            XposedLog.d(tag, "DexKitCacheManager: bridge closed")
+            value
         }
+        // close() can wait for a native withBridge query that ignored interruption.
+        // Retire the captured bridge off the package-loading thread, independently of a new session.
+        Thread({
+            try {
+                retired.first?.close()
+                retired.second?.flush()
+                XposedLog.d(tag, "DexKitCacheManager: retired bridge closed")
+            } catch (error: Throwable) {
+                XposedLog.w(tag, "DexKit bridge retirement failed", error)
+            }
+        }, "HyperCeiler-dexkit-close").apply { isDaemon = true }.start()
     }
 
     /**

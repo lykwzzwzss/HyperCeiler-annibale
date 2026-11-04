@@ -87,20 +87,20 @@ public class VariousThirdApps extends BaseLoad {
         boolean needMiuiImeUnlock = InputMethodConfig.shouldHookMiuiIme(mPackageName);
         boolean needAospIme = InputMethodConfig.shouldHookAospIme(mPackageName);
 
-        initHook(new InputMethodClassLoaderDispatcher());
-        initHook(new UnlockIme(), needMiuiImeUnlock);
-        initHook(new MiAospIme(), needAospIme);
+        initHook(() -> new InputMethodClassLoaderDispatcher());
+        initHook(() -> new UnlockIme(), () -> needMiuiImeUnlock);
+        initHook(() -> new MiAospIme(), () -> needAospIme);
     }
 
     private void initClipboardHooks() {
         boolean enableClipboardHook = PrefsBridge.getBoolean("sogou_xiaomi_clipboard");
 
-        initHook(new SoGouClipboard(), enableClipboardHook && isSogouPackage(mPackageName));
-        initHook(new BaiduClipboard(), enableClipboardHook && isBaiduPackage(mPackageName));
+        initHook(() -> new SoGouClipboard(), () -> enableClipboardHook && isSogouPackage(mPackageName));
+        initHook(() -> new BaiduClipboard(), () -> enableClipboardHook && isBaiduPackage(mPackageName));
     }
 
     private void initMusicHooks() {
-        initHook(MusicHooks.INSTANCE, PrefsBridge.getBoolean("system_ui_statusbar_music_switch") && PrefsBridge.getBoolean("system_ui_statusbar_music_show_app"));
+        initHook(() -> MusicHooks.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_statusbar_music_switch") && PrefsBridge.getBoolean("system_ui_statusbar_music_show_app"));
     }
 
     private static void spoofGoogleBuildIdentity() throws Throwable {

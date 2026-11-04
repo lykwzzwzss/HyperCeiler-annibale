@@ -14,19 +14,21 @@
 
 基于K90修复。设备：REDMI K90（annibale）。
 
-当前适配基线：HyperOS 4 `OS4.0.5.0.XPKCNXM`，Android 17 / API 37。
+当前适配基线：HyperOS 4 `OS4.0.6.0.XPKCNXM`，Android 17 / API 37。
 
 本分支基于 [K90 Pro Max 上游](https://github.com/wjy1065676928/HyperCeiler-myron) 继续适配；上游支持范围不等于本分支已经完成全部功能的实机验证。
 
-当前 K90 应用版本：系统界面组件 `18.3.2.57.0`，桌面 `RELEASE-8.01.02.7755-260904-10151930-R`，手机管家 `13.6.5-261003.0.1`。
+本轮真机核对版本：系统界面 `17.03.260226.r`，桌面 `RELEASE-8.01.02.8602-260918-10261905-R`。系统或应用升级后，需要重新核对接口和实际效果。
 
-最新安装包见 [Releases](https://github.com/lykwzzwzss/HyperCeiler-annibale/releases)。4712 包含安装器提醒修复及上滑解锁后的人脸岛同步清理；人脸退场效果仍待该版本安装后实测确认。
+最新安装包见 [Releases](https://github.com/lykwzzwzss/HyperCeiler-annibale/releases)。r4761 为签名 Release 构建，包含人脸岛源码合并及后续审查修复，保留停留时长、岛宽度、图标边距、指纹解锁隐藏和成功图标等自定义项。
+
+0ms 设置下的上滑解锁同步退场已在 r4760 真机确认；r4761 使用相同功能修复代码。非零停留、失败后点击重试、指纹/PIN 和 AOD 等分支仍需人工回归。5 个在 OS4 手机上缺少当前实现的旧桌面选项已明确置灰并保留配置，尚未恢复其功能。
 
 ADB 配置接口仅包含在 Debug 构建中，Release / Beta / Canary 不提供该入口。详情见 [ADB-SETTINGS.md](ADB-SETTINGS.md)。
 
 上游更新与 K90 适用性核对见 [2026-10-27 记录](UPSTREAM-K90-20261027.md)。
 
-当前源码已合入 K90 Pro Max 上游至 `2fee7c825`（2026-10-20），保留 K90 专有修复与原生版本守卫；已发布的 4712 安装包不包含这次上游合并。
+当前源码已合入 K90 Pro Max 上游至 `2fee7c825`（2026-10-20），保留 K90 专有修复与原生版本守卫；r4761 包含这次上游合并及后续 K90 修复。
 
 ## 使用前说明
 

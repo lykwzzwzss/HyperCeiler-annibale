@@ -34,11 +34,11 @@ public class PowerKeeper extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new GmsDozeFix(), PrefsBridge.getBoolean("powerkeeper_gms_doze_fix"));
-        initHook(new CustomRefreshRate(), PrefsBridge.getBoolean("various_custom_refresh_rate"));
-        initHook(new DisableGetDisplayCtrlCode(), PrefsBridge.getBoolean("powerkeeper_disable_get_display_ctrl_code"));
-        initHook(LockMaxFps.INSTANCE, PrefsBridge.getBoolean("powerkeeper_lock_max_fps"));
-        initHook(DontKillApps.INSTANCE, PrefsBridge.getBoolean("powerkeeper_do_not_kill_apps"));
-        initHook(new PreventBatteryWitelist(), PrefsBridge.getBoolean("powerkeeper_prevent_recovery_of_battery_optimization_whitelist"));
+        initHook(() -> new GmsDozeFix(), () -> PrefsBridge.getBoolean("powerkeeper_gms_doze_fix"));
+        initHook(() -> new CustomRefreshRate(), () -> PrefsBridge.getBoolean("various_custom_refresh_rate"));
+        initHook(() -> new DisableGetDisplayCtrlCode(), () -> PrefsBridge.getBoolean("powerkeeper_disable_get_display_ctrl_code"));
+        initHook(() -> LockMaxFps.INSTANCE, () -> PrefsBridge.getBoolean("powerkeeper_lock_max_fps"));
+        initHook(() -> DontKillApps.INSTANCE, () -> PrefsBridge.getBoolean("powerkeeper_do_not_kill_apps"));
+        initHook(() -> new PreventBatteryWitelist(), () -> PrefsBridge.getBoolean("powerkeeper_prevent_recovery_of_battery_optimization_whitelist"));
     }
 }

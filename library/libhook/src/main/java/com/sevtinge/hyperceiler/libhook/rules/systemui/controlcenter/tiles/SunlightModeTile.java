@@ -47,13 +47,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class SunlightModeTile extends TileUtils {
 
@@ -90,7 +87,8 @@ public class SunlightModeTile extends TileUtils {
     private static final String PREF_SUNSHINE_WRITE_MODE_LEGACY = "system_control_center_sunshine_new_mode_write";
 
     // root 命令统一走单线程 executor，单次执行最多等待 2 秒，避免阻塞调用线程
-    private static final long ROOT_TASK_TIMEOUT_SECONDS = 2L;
+    private static final long ROOT_COMMAND_TIMEOUT_MS = 2000L;
+    private final AtomicLong screenEpoch = new AtomicLong();
     private static final ExecutorService ROOT_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r, "SunlightMode-root");
         thread.setDaemon(true);
@@ -201,7 +199,7 @@ public class SunlightModeTile extends TileUtils {
 
         // 提升节点可写性（root 下多半已是 rw-rw-r--，失败不影响后续写入）
         final String brightnessPath = mBrightnessPath;
-        runOnRootExecutor(() -> ShellUtils.rootExecCmd("chmod 666 " + brightnessPath));
+        runOnRootExecutor(() -> ShellUtils.rootExecCmd("chmod 666 " + brightnessPath, ROOT_COMMAND_TIMEOUT_MS));
 
         if (BRIGHTNESS_FILE_CLONE.equals(mBrightnessPath)) {
             XposedLog.w(TAG, "Only brightness_clone is available; it does not drive the panel, custom brightness may be a no-op");
@@ -231,26 +229,11 @@ public class SunlightModeTile extends TileUtils {
     private void runOnRootExecutor(Runnable task) {
         try {
             ROOT_EXECUTOR.execute(() -> {
-                FutureTask<Void> future = new FutureTask<>(() -> {
-                    task.run();
-                    return null;
-                });
-                Thread worker = new Thread(future, "SunlightMode-root-cmd");
-                worker.setDaemon(true);
-                worker.start();
-                try {
-                    future.get(ROOT_TASK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-                } catch (TimeoutException e) {
-                    worker.interrupt();
-                    XposedLog.w(TAG, "Root task timed out after " + ROOT_TASK_TIMEOUT_SECONDS + "s");
-                } catch (ExecutionException e) {
-                    XposedLog.w(TAG, "Root task failed", e);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+                try { task.run(); }
+                catch (Throwable error) { XposedLog.w(TAG, "Root operation failed", error); }
             });
-        } catch (RejectedExecutionException e) {
-            XposedLog.w(TAG, "Root task rejected", e);
+        } catch (RejectedExecutionException error) {
+            XposedLog.w(TAG, "Root task rejected", error);
         }
     }
 
@@ -294,8 +277,11 @@ public class SunlightModeTile extends TileUtils {
         // 保存磁贴实例引用
         saveTileInstance(ctx);
 
-        // root 命令与设置写入全部移出主线程，避免同步 su 造成 ANR
+        // All state transitions run on the same worker; screen-off invalidates queued clicks.
+        final long epoch = screenEpoch.get();
         runOnRootExecutor(() -> {
+            android.os.PowerManager power = context.getSystemService(android.os.PowerManager.class);
+            if (screenEpoch.get() != epoch || (power != null && !power.isInteractive())) return;
             try {
                 switch (mMode) {
                     case SYSTEM_SUNLIGHT -> toggleSystemSunlightMode(context);
@@ -449,13 +435,7 @@ public class SunlightModeTile extends TileUtils {
     private void disableSunlightMode(TileContext ctx, Context context) {
         unregisterBroadcastReceiver(ctx, context);
 
-        if (mLastBrightness > 0) {
-            writeBrightness(mLastBrightness);
-        }
-        // 先还原亮度再交还自动亮度，否则自动亮度会立刻覆盖恢复值
-        handleAutoBrightnessOnDisable(context);
-
-        resetState();
+        restoreBrightness(context);
 
         XposedLog.d(TAG, "Sunlight mode disabled");
     }
@@ -571,7 +551,7 @@ public class SunlightModeTile extends TileUtils {
         int before = readBrightness();
 
         // 只允许在 runOnRootExecutor 的任务中调用，避免主线程同步执行 su
-        ShellUtils.rootExecCmd("echo " + target + " > " + mBrightnessPath);
+        ShellUtils.rootExecCmd("echo " + target + " > " + mBrightnessPath, ROOT_COMMAND_TIMEOUT_MS);
 
         int after = readBrightness();
         if (after == before && target != before) {
@@ -666,31 +646,34 @@ public class SunlightModeTile extends TileUtils {
      * 息屏时恢复亮度并刷新磁贴状态
      */
     private void onScreenOff(Context context) {
-        if (mLastBrightness == 0) return;
+        if (!mIsSunlightActive && mSavedAutoBrightnessMode < 0) return;
 
         XposedLog.d(TAG, "Screen off, restoring brightness and refreshing tile");
 
-        // 恢复亮度
-        if (!mUseSystemApi && mBrightnessPath != null) {
-            writeBrightness(mLastBrightness);
-        } else {
-            Settings.System.putInt(context.getContentResolver(), SETTING_SCREEN_BRIGHTNESS, mLastBrightness);
-        }
-
-        // 恢复自动亮度
-        handleAutoBrightnessOnDisable(context);
-
-        // 重置状态
-        resetState();
+        restoreBrightness(context);
 
         // 刷新磁贴状态（回到主线程执行）
         MAIN_HANDLER.post(this::refreshTileState);
+    }
+
+    private void restoreBrightness(Context context) {
+        try {
+            if (!mUseSystemApi && mBrightnessPath != null) writeBrightness(mLastBrightness);
+            else Settings.System.putInt(context.getContentResolver(), SETTING_SCREEN_BRIGHTNESS, mLastBrightness);
+        } catch (Exception error) {
+            XposedLog.w(TAG, "Node restore failed; restoring system brightness", error);
+            Settings.System.putInt(context.getContentResolver(), SETTING_SCREEN_BRIGHTNESS, mLastBrightness);
+        } finally {
+            try { handleAutoBrightnessOnDisable(context); }
+            finally { resetState(); }
+        }
     }
 
     /**
      * 息屏处理只在 executor 中执行，广播线程仅负责投递
      */
     private void scheduleScreenOff(Context context) {
+        screenEpoch.incrementAndGet();
         runOnRootExecutor(() -> onScreenOff(context));
     }
 

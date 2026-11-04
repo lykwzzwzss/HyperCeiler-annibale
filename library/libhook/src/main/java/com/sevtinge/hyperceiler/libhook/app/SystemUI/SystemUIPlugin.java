@@ -27,6 +27,6 @@ import com.sevtinge.hyperceiler.common.utils.PrefsBridge;
 public class SystemUIPlugin extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(FlashLightNotificationColor.INSTANCE, PrefsBridge.getBoolean("system_ui_control_center_opt_notification_element_background_color"));
+        initHook(() -> FlashLightNotificationColor.INSTANCE, () -> PrefsBridge.getBoolean("system_ui_control_center_opt_notification_element_background_color"));
     }
 }

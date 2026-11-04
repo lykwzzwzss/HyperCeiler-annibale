@@ -18,6 +18,9 @@
  */
 package com.sevtinge.hyperceiler.libhook.rules.systemframework.others
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
 import com.sevtinge.hyperceiler.common.log.XposedLog
 import com.sevtinge.hyperceiler.common.utils.api.ProjectApi.isDebug
 import com.sevtinge.hyperceiler.libhook.base.BaseHook
@@ -56,16 +59,15 @@ object NoAccessDeviceLogsRequest : BaseHook() {
                     val uid = client.getIntField("mUid")
                     val packageName =
                         client.getObjectField("mPackageName") as String
-                    /*
-                     * "关闭访问设备日志确认" 只应替系统自己/ADB 省掉弹窗。以前的实现对所有请求都
-                     * 调 onAccessApprovedForClient，等于让任意应用静默读 logcat；这里改为只批准
-                     * root/system/shell，其余请求走拒绝路径。
-                     */
-                    if (uid <= 1000 || uid == 2000) {
-                        mLogcatManagerService.callMethod("onAccessApprovedForClient", client)
-                    } else {
-                        mLogcatManagerService.callMethod("declineRequest", client)
-                    }
+                    val context = mLogcatManagerService.callMethod("getContext") as? Context
+                        ?: return@createBeforeHook
+                    // Bypass confirmation for an already authorized log reader. Do not turn
+                    // this preference into a blanket denial of ordinary applications.
+                    val authorized = uid == 0 || uid == 1000 || uid == 2000 ||
+                        context.checkPermission(Manifest.permission.READ_LOGS, -1, uid) ==
+                        PackageManager.PERMISSION_GRANTED
+                    if (!authorized) return@createBeforeHook
+                    mLogcatManagerService.callMethod("onAccessApprovedForClient", client)
 
                     // debug 用，取消禁用详细日志输出可进行调试
                     if (isDebug()) {

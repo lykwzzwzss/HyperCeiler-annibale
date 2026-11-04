@@ -27,6 +27,6 @@ import com.sevtinge.hyperceiler.libhook.rules.cloudservice.CloudList;
 public class CloudService extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(new CloudList(), PrefsBridge.getBoolean("micloud_service_list"));
+        initHook(() -> new CloudList(), () -> PrefsBridge.getBoolean("micloud_service_list"));
     }
 }

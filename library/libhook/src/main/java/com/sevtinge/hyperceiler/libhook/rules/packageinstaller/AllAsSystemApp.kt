@@ -38,7 +38,7 @@ object AllAsSystemApp : BaseHook() {
         if (systemMethod.isEmpty()) {
             XposedLog.e(TAG, packageName, "DexKit anchor not found: isSystemApp(ApplicationInfo)")
         }
-        return true
+        return systemMethod.isNotEmpty()
     }
 
     private val systemMethod by lazy<List<Method>> {

@@ -28,6 +28,6 @@ public class Downloads extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(RemoveXlDownload.INSTANCE, PrefsBridge.getBoolean("various_fuck_xlDownload"));
+        initHook(() -> RemoveXlDownload.INSTANCE, () -> PrefsBridge.getBoolean("various_fuck_xlDownload"));
     }
 }

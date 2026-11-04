@@ -9,6 +9,6 @@ import com.sevtinge.hyperceiler.libhook.rules.photopicker.DisableReroute;
 public class PhotoPicker extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(new DisableReroute(), PrefsBridge.getBoolean("photopicker_disable_reroute"));
+        initHook(() -> new DisableReroute(), () -> PrefsBridge.getBoolean("photopicker_disable_reroute"));
     }
 }

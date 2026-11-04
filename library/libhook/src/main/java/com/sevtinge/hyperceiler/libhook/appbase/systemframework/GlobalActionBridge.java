@@ -32,6 +32,7 @@ import com.sevtinge.hyperceiler.common.utils.PrefsBridge;
 import com.sevtinge.hyperceiler.libhook.appbase.systemframework.actions.HomeNativeGestureActions;
 import com.sevtinge.hyperceiler.libhook.appbase.systemui.StatusBarActionBridge;
 import com.sevtinge.hyperceiler.libhook.base.BaseHook;
+import com.sevtinge.hyperceiler.libhook.utils.api.BroadcastSenderGuard;
 
 public final class GlobalActionBridge {
     private static final int ACTION_ID_NONE = 0;
@@ -97,7 +98,7 @@ public final class GlobalActionBridge {
 
     public static boolean sendAction(Context context, String actionSuffix) {
         try {
-            context.sendBroadcast(new Intent(BaseHook.ACTION_PREFIX + actionSuffix));
+            BroadcastSenderGuard.send(context, new Intent(BaseHook.ACTION_PREFIX + actionSuffix), "android");
             return true;
         } catch (Throwable t) {
             AndroidLog.w("GlobalActionBridge", "system", "sendAction", t);
@@ -169,7 +170,7 @@ public final class GlobalActionBridge {
         }
         Intent broadcastIntent = new Intent(ACTION_LAUNCH_INTENT);
         broadcastIntent.putExtra("intent", intent);
-        context.sendBroadcast(broadcastIntent);
+        BroadcastSenderGuard.send(context, broadcastIntent, "android");
         return true;
     }
 

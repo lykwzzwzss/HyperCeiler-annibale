@@ -296,7 +296,7 @@ public class DisableRootedCheck extends BaseHook {
             XposedLog.e(TAG, getPackageName(),
                 "DexKit anchor not found: root check methods, skip root check bypass");
         }
-        return true;
+        return !mCheckRootMethods.isEmpty() || (mReturnEnvironmentMethod != null && mClientApiRequestClass != null && mEnvironmentPutMethod != null && mRiskAppField != null && mUnsetEnvironmentMethod != null && !mSetEnvironmentMethods.isEmpty());
     }
 
     @Override

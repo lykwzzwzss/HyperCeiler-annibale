@@ -28,6 +28,6 @@ public class TsmClient extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(AutoNfc.INSTANCE, PrefsBridge.getBoolean("tsmclient_auto_nfc"));
+        initHook(() -> AutoNfc.INSTANCE, () -> PrefsBridge.getBoolean("tsmclient_auto_nfc"));
     }
 }

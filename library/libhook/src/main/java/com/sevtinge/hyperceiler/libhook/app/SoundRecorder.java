@@ -29,7 +29,7 @@ import com.sevtinge.hyperceiler.libhook.rules.soundrecorder.UnlockAIMode;
 public class SoundRecorder extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(new DisableAiWatermark(), PrefsBridge.getBoolean("sound_recorder_disable_ai_watermark"));
-        initHook(UnlockAIMode.INSTANCE, PrefsBridge.getBoolean("sound_recorder_unlock_ai"));
+        initHook(() -> new DisableAiWatermark(), () -> PrefsBridge.getBoolean("sound_recorder_disable_ai_watermark"));
+        initHook(() -> UnlockAIMode.INSTANCE, () -> PrefsBridge.getBoolean("sound_recorder_unlock_ai"));
     }
 }

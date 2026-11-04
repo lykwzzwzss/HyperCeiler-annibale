@@ -30,6 +30,6 @@ public class VoiceTrigger extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(BypassUDKWordLegalCheck.INSTANCE, PrefsBridge.getBoolean("bypass_voicetrigger_udk_legalcheck"));
+        initHook(() -> BypassUDKWordLegalCheck.INSTANCE, () -> PrefsBridge.getBoolean("bypass_voicetrigger_udk_legalcheck"));
     }
 }

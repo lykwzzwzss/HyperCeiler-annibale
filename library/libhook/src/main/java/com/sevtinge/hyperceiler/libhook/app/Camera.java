@@ -39,19 +39,19 @@ public class Camera extends BaseLoad {
     @Override
     public void onPackageLoaded() {
         // 拍照
-        initHook(new CustomWatermark(), PrefsBridge.getBoolean("camera_custom_watermark"));
-        initHook(new BlackLeica(), PrefsBridge.getBoolean("camera_black_leica"));
+        initHook(() -> new CustomWatermark(), () -> PrefsBridge.getBoolean("camera_custom_watermark"));
+        initHook(() -> new BlackLeica(), () -> PrefsBridge.getBoolean("camera_black_leica"));
 
         // 设置
-        initHook(new EnableLabOptions(), PrefsBridge.getBoolean("camera_settings_lab_options"));
-        initHook(new UnlockTrackEyes(), PrefsBridge.getBoolean("camera_settings_track_eyes"));
+        initHook(() -> new EnableLabOptions(), () -> PrefsBridge.getBoolean("camera_settings_lab_options"));
+        initHook(() -> new UnlockTrackEyes(), () -> PrefsBridge.getBoolean("camera_settings_track_eyes"));
 
-        initHook(new MaxScreenBrightness(), PrefsBridge.getBoolean("camera_max_brightness"));
-        initHook(new CustomCameraColor(), PrefsBridge.getBoolean("camera_custom_theme_color"));
+        initHook(() -> new MaxScreenBrightness(), () -> PrefsBridge.getBoolean("camera_max_brightness"));
+        initHook(() -> new CustomCameraColor(), () -> PrefsBridge.getBoolean("camera_custom_theme_color"));
 
-        initHook(UnlockSuperHighQuality.INSTANCE, PrefsBridge.getBoolean("camera_super_high_quality"));
-        initHook(Unlock4k60.INSTANCE, PrefsBridge.getBoolean("camera_unlock_4k60"));
-        initHook(UnlockLeica.INSTANCE, PrefsBridge.getBoolean("camera_unlock_leica"));
-        initHook(CloudWatermark.INSTANCE, PrefsBridge.getBoolean("camera_cloud_watermark"));
+        initHook(() -> UnlockSuperHighQuality.INSTANCE, () -> PrefsBridge.getBoolean("camera_super_high_quality"));
+        initHook(() -> Unlock4k60.INSTANCE, () -> PrefsBridge.getBoolean("camera_unlock_4k60"));
+        initHook(() -> UnlockLeica.INSTANCE, () -> PrefsBridge.getBoolean("camera_unlock_leica"));
+        initHook(() -> CloudWatermark.INSTANCE, () -> PrefsBridge.getBoolean("camera_cloud_watermark"));
     }
 }

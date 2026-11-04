@@ -30,6 +30,6 @@ public class SimActivate extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new RoamingActivateHelper(), PrefsBridge.getBoolean("sim_activation_service_disable_activate_when_roaming"));
+        initHook(() -> new RoamingActivateHelper(), () -> PrefsBridge.getBoolean("sim_activation_service_disable_activate_when_roaming"));
     }
 }

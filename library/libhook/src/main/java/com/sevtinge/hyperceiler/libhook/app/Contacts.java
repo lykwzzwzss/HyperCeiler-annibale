@@ -30,7 +30,7 @@ public class Contacts extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new DisableNetworkAssistantOfflineInfoManager(), PrefsBridge.getBoolean("contacts_disable_offline_info_manager"));
-        initHook(new BusinessHallAdBlock(), PrefsBridge.getBoolean("contacts_business_hall_ad_block"));
+        initHook(() -> new DisableNetworkAssistantOfflineInfoManager(), () -> PrefsBridge.getBoolean("contacts_disable_offline_info_manager"));
+        initHook(() -> new BusinessHallAdBlock(), () -> PrefsBridge.getBoolean("contacts_business_hall_ad_block"));
     }
 }

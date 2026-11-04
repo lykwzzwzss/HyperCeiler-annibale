@@ -31,10 +31,10 @@ public class Barrage extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(AnyBarrage.INSTANCE, PrefsBridge.getBoolean("barrage_any_barrage"));
-        initHook(BarrageNotTouchable.INSTANCE, PrefsBridge.getBoolean("barrage_not_touchable"));
-        initHook(GlobalBarrage.INSTANCE, PrefsBridge.getBoolean("barrage_global_enable"));
+        initHook(() -> AnyBarrage.INSTANCE, () -> PrefsBridge.getBoolean("barrage_any_barrage"));
+        initHook(() -> BarrageNotTouchable.INSTANCE, () -> PrefsBridge.getBoolean("barrage_not_touchable"));
+        initHook(() -> GlobalBarrage.INSTANCE, () -> PrefsBridge.getBoolean("barrage_global_enable"));
         int length = PrefsBridge.getInt("barrage_custom_barrage_length", 36);
-        initHook(CustomBarrageLength.INSTANCE, length >= 12 && length <= 108 && length != 36);
+        initHook(() -> CustomBarrageLength.INSTANCE, () -> length >= 12 && length <= 108 && length != 36);
     }
 }

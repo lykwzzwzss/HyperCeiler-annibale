@@ -28,7 +28,7 @@ import com.sevtinge.hyperceiler.libhook.rules.mtb.IsUserBuild;
 public class Mtb extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(BypassAuthentication.INSTANCE, PrefsBridge.getBoolean("mtb_auth"));
-        initHook(IsUserBuild.INSTANCE, PrefsBridge.getBoolean("mtb_auth"));
+        initHook(() -> BypassAuthentication.INSTANCE, () -> PrefsBridge.getBoolean("mtb_auth"));
+        initHook(() -> IsUserBuild.INSTANCE, () -> PrefsBridge.getBoolean("mtb_auth"));
     }
 }

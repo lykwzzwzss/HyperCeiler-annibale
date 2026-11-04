@@ -28,7 +28,7 @@ import com.sevtinge.hyperceiler.libhook.rules.guardprovider.DisableUploadAppList
 public class GuardProvider extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(new DisableRootedCheck(), PrefsBridge.getBoolean("guard_provider_disable_root_check"));
-        initHook(new DisableUploadAppListNew(), PrefsBridge.getBoolean("disable_upload_applist"));
+        initHook(() -> new DisableRootedCheck(), () -> PrefsBridge.getBoolean("guard_provider_disable_root_check"));
+        initHook(() -> new DisableUploadAppListNew(), () -> PrefsBridge.getBoolean("disable_upload_applist"));
     }
 }

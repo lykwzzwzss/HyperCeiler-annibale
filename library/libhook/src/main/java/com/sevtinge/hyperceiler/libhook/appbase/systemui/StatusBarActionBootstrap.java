@@ -50,12 +50,14 @@ public class StatusBarActionBootstrap extends BaseHook {
     private static final String STATUS_BAR_SERVICE = "statusbar";
     private static final String HOT_RELOAD_CONTEXT_KEY =
         "StatusBarActionBootstrap.systemUiContext";
+    private static final String HOT_RELOAD_STATUS_BAR_KEY = "StatusBarActionBootstrap.statusBar";
 
     private static WeakReference<Object> sStatusBarRef = new WeakReference<>(null);
     private static volatile boolean sReceiverRegistered;
 
     @Override
     public void init() {
+        sStatusBarRef = new WeakReference<>(getHotReloadRuntimeState(HOT_RELOAD_STATUS_BAR_KEY, Object.class));
         // CentralSurfacesImpl.start 已在热重载前执行时不会再次回调，直接使用已保存的
         // SystemUI Context 重建 receiver。
         Context restoredContext = getHotReloadRuntimeState(HOT_RELOAD_CONTEXT_KEY, Context.class);
@@ -69,6 +71,7 @@ public class StatusBarActionBootstrap extends BaseHook {
                     Object result = chain.proceed();
                     Object statusBar = chain.getThisObject();
                     sStatusBarRef = new WeakReference<>(statusBar);
+                    putHotReloadRuntimeState(HOT_RELOAD_STATUS_BAR_KEY, statusBar);
 
                     Context context = (Context) getObjectField(statusBar, "mContext");
                     registerReceiver(context);
@@ -91,10 +94,13 @@ public class StatusBarActionBootstrap extends BaseHook {
                 context,
                 receiver,
                 createIntentFilter(),
-                BroadcastSenderGuard.PERMISSION,
+                null,
                 null,
                 ContextCompat.RECEIVER_EXPORTED
             );
+            ContextCompat.registerReceiver(context, receiver,
+                new IntentFilter(StatusBarActionBridge.ACTION_RESTART_SYSTEM_UI),
+                BroadcastSenderGuard.PERMISSION, null, ContextCompat.RECEIVER_EXPORTED);
             sReceiverRegistered = true;
             putHotReloadRuntimeState(HOT_RELOAD_CONTEXT_KEY, context);
             registerHotReloadCleanup(() -> {
@@ -121,18 +127,21 @@ public class StatusBarActionBootstrap extends BaseHook {
         filter.addAction(StatusBarActionBridge.ACTION_OPEN_RECENTS);
         filter.addAction(StatusBarActionBridge.ACTION_OPEN_VOLUME_DIALOG);
         filter.addAction(StatusBarActionBridge.ACTION_CLEAR_MEMORY);
-        filter.addAction(StatusBarActionBridge.ACTION_RESTART_SYSTEM_UI);
         return filter;
     }
 
     private final class UnifiedReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (!BroadcastSenderGuard.isFromModule(this, context)) {
+            if (intent == null) return;
+            String action = intent.getAction();
+            boolean trusted = StatusBarActionBridge.ACTION_RESTART_SYSTEM_UI.equals(action)
+                ? BroadcastSenderGuard.isFromModule(this, context)
+                : BroadcastSenderGuard.isTrustedActionSender(this, context);
+            if (!trusted) {
                 XposedLog.w("StatusBarAction", "dropped action from an untrusted sender");
                 return;
             }
-            String action = intent.getAction();
             if (action == null) {
                 return;
             }

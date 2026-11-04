@@ -27,6 +27,6 @@ import com.sevtinge.hyperceiler.libhook.rules.remotecontroller.DisableAd;
 public class RemoteController extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(new DisableAd(), PrefsBridge.getBoolean("remotecontroller_disable_ad"));
+        initHook(() -> new DisableAd(), () -> PrefsBridge.getBoolean("remotecontroller_disable_ad"));
     }
 }

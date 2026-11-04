@@ -34,10 +34,10 @@ public class ContentExtension extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new UseThirdPartyBrowser(), PrefsBridge.getBoolean("content_extension_browser"));
-        initHook(new DoublePress(), PrefsBridge.getBoolean("content_extension_double_press"));
-        initHook(new Taplus(), PrefsBridge.getBoolean("security_center_taplus"));
-        initHook(new LinkOpenMode(), true);
-        initHook(UnlockTaplus.INSTANCE, PrefsBridge.getBoolean("content_extension_unlock_taplus") && isPad());
+        initHook(() -> new UseThirdPartyBrowser(), () -> PrefsBridge.getBoolean("content_extension_browser"));
+        initHook(() -> new DoublePress(), () -> PrefsBridge.getBoolean("content_extension_double_press"));
+        initHook(() -> new Taplus(), () -> PrefsBridge.getBoolean("security_center_taplus"));
+        initHook(() -> new LinkOpenMode(), () -> true);
+        initHook(() -> UnlockTaplus.INSTANCE, () -> PrefsBridge.getBoolean("content_extension_unlock_taplus") && isPad());
     }
 }

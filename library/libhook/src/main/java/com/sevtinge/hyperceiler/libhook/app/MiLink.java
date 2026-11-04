@@ -32,10 +32,10 @@ public class MiLink extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new UnlockMiShare(), PrefsBridge.getBoolean("milink_unlock_mishare"));
-        initHook(UnlockSendApp.INSTANCE, PrefsBridge.getBoolean("milink_unlock_send_app"));
-        initHook(new DisablePcManagerClipboardRegionCheck(), PrefsBridge.getBoolean("milink_disable_pc_clipboard_region_check"));
-        initHook(new AllowCameraDevices(), PrefsBridge.getBoolean("milink_allow_camera_devices"));
-        initHook(new FuckHpplay(), PrefsBridge.getBoolean("milink_fuck_hpplay"));
+        initHook(() -> new UnlockMiShare(), () -> PrefsBridge.getBoolean("milink_unlock_mishare"));
+        initHook(() -> UnlockSendApp.INSTANCE, () -> PrefsBridge.getBoolean("milink_unlock_send_app"));
+        initHook(() -> new DisablePcManagerClipboardRegionCheck(), () -> PrefsBridge.getBoolean("milink_disable_pc_clipboard_region_check"));
+        initHook(() -> new AllowCameraDevices(), () -> PrefsBridge.getBoolean("milink_allow_camera_devices"));
+        initHook(() -> new FuckHpplay(), () -> PrefsBridge.getBoolean("milink_fuck_hpplay"));
     }
 }

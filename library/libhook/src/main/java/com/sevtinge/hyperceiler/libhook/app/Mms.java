@@ -32,9 +32,9 @@ public class Mms extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(new DisableRiskTip(), PrefsBridge.getBoolean("mms_disable_fraud_risk_tip") || PrefsBridge.getBoolean("mms_disable_overseas_risk_tip"));
-        initHook(new DisableAd(), PrefsBridge.getBoolean("mms_disable_ad"));
-        initHook(new ImOldDevice(), PrefsBridge.getBoolean("mms_im_old_device"));
-        initHook(AutoCopyVerificationCode.INSTANCE, PrefsBridge.getBoolean("mms_verification_code_auto_copy"));
+        initHook(() -> new DisableRiskTip(), () -> PrefsBridge.getBoolean("mms_disable_fraud_risk_tip") || PrefsBridge.getBoolean("mms_disable_overseas_risk_tip"));
+        initHook(() -> new DisableAd(), () -> PrefsBridge.getBoolean("mms_disable_ad"));
+        initHook(() -> new ImOldDevice(), () -> PrefsBridge.getBoolean("mms_im_old_device"));
+        initHook(() -> AutoCopyVerificationCode.INSTANCE, () -> PrefsBridge.getBoolean("mms_verification_code_auto_copy"));
     }
 }

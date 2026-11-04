@@ -57,7 +57,7 @@ public class GlobalActionBootstrap extends BaseHook {
     private final BroadcastReceiver mGlobalReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (!BroadcastSenderGuard.isFromModule(this, context)) {
+            if (intent == null || !BroadcastSenderGuard.isTrustedActionSender(this, context)) {
                 AndroidLog.w(TAG, "system", "dropped global action from an untrusted sender");
                 return;
             }
@@ -188,7 +188,7 @@ public class GlobalActionBootstrap extends BaseHook {
             filter.addAction(GlobalActionBridge.ACTION_FORCE_STOP_TOP_APP);
             filter.addAction(BaseHook.ACTION_PREFIX + "StartGoogleCircleToSearch");
             context.registerReceiver(mGlobalReceiver, filter,
-                BroadcastSenderGuard.PERMISSION, null, Context.RECEIVER_EXPORTED);
+                null, null, Context.RECEIVER_EXPORTED);
             sGlobalReceiverRegistered = true;
             putHotReloadRuntimeState(HOT_RELOAD_CONTEXT_KEY, context);
             registerHotReloadCleanup(() -> {

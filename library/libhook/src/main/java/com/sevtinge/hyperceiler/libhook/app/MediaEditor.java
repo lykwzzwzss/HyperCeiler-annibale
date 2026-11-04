@@ -39,17 +39,16 @@ public class MediaEditor extends BaseLoad {
     public void onPackageLoaded() {
         // Install even when all four Gallery switches are initially off: their
         // values are checked per request without restarting the provider process.
-        initHook(new GalleryCreationAvailabilityOS4(),
-            com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.isMoreHyperOSVersion(4f));
+        initHook(() -> new GalleryCreationAvailabilityOS4(), () -> com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.isMoreHyperOSVersion(4f));
         // AI
-        initHook(new UnlockAigc(), PrefsBridge.getBoolean("mediaeditor_unlock_aigc"));
+        initHook(() -> new UnlockAigc(), () -> PrefsBridge.getBoolean("mediaeditor_unlock_aigc"));
         // 基础
-        initHook(UnlockMinimumCropLimit2.INSTANCE, PrefsBridge.getBoolean("mediaeditor_unlock_minimum_crop_limit"));
-        initHook(UnlockLeicaFilter.INSTANCE, PrefsBridge.getBoolean("mediaeditor_unlock_leica_filter"));
-        initHook(CustomWatermark.INSTANCE, !Objects.equals(PrefsBridge.getString("mediaeditor_custom_watermark", ""), ""));
+        initHook(() -> UnlockMinimumCropLimit2.INSTANCE, () -> PrefsBridge.getBoolean("mediaeditor_unlock_minimum_crop_limit"));
+        initHook(() -> UnlockLeicaFilter.INSTANCE, () -> PrefsBridge.getBoolean("mediaeditor_unlock_leica_filter"));
+        initHook(() -> CustomWatermark.INSTANCE, () -> !Objects.equals(PrefsBridge.getString("mediaeditor_custom_watermark", ""), ""));
         // 创作
-        initHook(UnlockCustomPhotoFrames.INSTANCE, PrefsBridge.getBoolean("mediaeditor_unlock_custom_photo_frames_v2"));
-        initHook(UnlockDisney.INSTANCE, PrefsBridge.getBoolean("mediaeditor_unlock_disney_some_func_v2"));
+        initHook(() -> UnlockCustomPhotoFrames.INSTANCE, () -> PrefsBridge.getBoolean("mediaeditor_unlock_custom_photo_frames_v2"));
+        initHook(() -> UnlockDisney.INSTANCE, () -> PrefsBridge.getBoolean("mediaeditor_unlock_disney_some_func_v2"));
     }
 
 }

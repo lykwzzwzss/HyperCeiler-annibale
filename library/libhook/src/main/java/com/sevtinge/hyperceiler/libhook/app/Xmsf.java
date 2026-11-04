@@ -27,6 +27,6 @@ import com.sevtinge.hyperceiler.libhook.rules.xmsf.UnlockFoucsAuth;
 public class Xmsf extends BaseLoad {
     @Override
     public void onPackageLoaded() {
-        initHook(UnlockFoucsAuth.INSTANCE, PrefsBridge.getBoolean("xmsf_unlock_foucs_app_sign_white_list"));
+        initHook(() -> UnlockFoucsAuth.INSTANCE, () -> PrefsBridge.getBoolean("xmsf_unlock_foucs_app_sign_white_list"));
     }
 }

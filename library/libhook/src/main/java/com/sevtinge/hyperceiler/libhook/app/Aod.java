@@ -33,9 +33,9 @@ public class Aod extends BaseLoad {
 
     @Override
     public void onPackageLoaded() {
-        initHook(UnlockShortCuts.INSTANCE, isMoreSmallVersion(200, 2f));
-        initHook(new UnlockAlwaysOnDisplay(), PrefsBridge.getBoolean("aod_unlock_always_on_display_hyper"));
-        initHook(new UnlockAodAon(), PrefsBridge.getBoolean("aod_unlock_aon"));
-        initHook(UnlockAiWallpaper.INSTANCE, PrefsBridge.getBoolean("aod_unlock_ai_wallpaper"));
+        initHook(() -> UnlockShortCuts.INSTANCE, () -> isMoreSmallVersion(200, 2f));
+        initHook(() -> new UnlockAlwaysOnDisplay(), () -> PrefsBridge.getBoolean("aod_unlock_always_on_display_hyper"));
+        initHook(() -> new UnlockAodAon(), () -> PrefsBridge.getBoolean("aod_unlock_aon"));
+        initHook(() -> UnlockAiWallpaper.INSTANCE, () -> PrefsBridge.getBoolean("aod_unlock_ai_wallpaper"));
     }
 }
