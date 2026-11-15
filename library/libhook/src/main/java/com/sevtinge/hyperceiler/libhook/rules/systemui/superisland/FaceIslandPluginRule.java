@@ -281,7 +281,7 @@ public class FaceIslandPluginRule extends FaceIslandRuleBase {
             @Override
             public void after(HookParam param) {
                 Object scaled = rect
-                    ? FaceIslandTemplateBridge.scaleDebugIslandRect(param.getResult())
+                    ? FaceIslandTemplateBridge.scaleDebugIslandRect(param.arg(0), param.getResult())
                     : FaceIslandTemplateBridge.scaleManagedIslandWidth(
                     param.getThisObject(), param.getResult());
                 if (scaled != param.getResult()) {

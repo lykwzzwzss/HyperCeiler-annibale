@@ -9,6 +9,7 @@
     <com.sevtinge.hyperceiler.home.widget.HomeViewPage2
         android:id="@+id/vp_fragments"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:saveEnabled="false" />
 
 </FrameLayout>

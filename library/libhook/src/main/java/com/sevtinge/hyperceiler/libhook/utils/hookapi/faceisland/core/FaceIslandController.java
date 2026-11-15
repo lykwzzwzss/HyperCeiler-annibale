@@ -809,6 +809,7 @@ public final class FaceIslandController {
             this.publishedHost = null;
             this.publishedKey = null;
             this.entryState.clear();
+            FaceIslandNativeFaceVisibility.setSuppressed(false);
         }
     }
 
@@ -1060,6 +1061,7 @@ public final class FaceIslandController {
         }
         this.entryInvalidated = true;
         this.lastPublishMs = SystemClock.elapsedRealtime();
+        FaceIslandNativeFaceVisibility.setSuppressed(false);
     }
 
     public void retry() {

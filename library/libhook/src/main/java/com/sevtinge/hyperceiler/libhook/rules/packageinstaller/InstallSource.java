@@ -18,62 +18,72 @@
  */
 package com.sevtinge.hyperceiler.libhook.rules.packageinstaller;
 
-import android.app.Activity;
-import android.text.TextUtils;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.view.View;
+import android.widget.TextView;
 
 import com.sevtinge.hyperceiler.common.log.XposedLog;
 import com.sevtinge.hyperceiler.common.utils.PrefsBridge;
 import com.sevtinge.hyperceiler.libhook.base.BaseHook;
+
+import io.github.lingqiqi5211.ezhooktool.xposed.common.HookParam;
+import io.github.lingqiqi5211.ezhooktool.xposed.java.IMethodHook;
 
 import java.lang.reflect.Method;
 
 public class InstallSource extends BaseHook {
 
     private static final String PREF_KEY = "miui_package_installer_install_source";
-    private static final String INSTALL_START = "com.miui.packageInstaller.InstallStart";
-    private static final String CALLING_PACKAGE_HELPER = "y2.d$a";
-    private static final String LEGACY_CALLING_PACKAGE_HELPER = "com.miui.packageInstaller.L";
-
-    String mInstallSourcePackageName;
+    private static final String APP_INFO = "com.miui.packageInstaller.ui.listcomponets.";
 
     @Override
     public void init() {
-        // 默认不修改安装来源：只有用户显式填写包名时才安装 Hook
-        mInstallSourcePackageName = PrefsBridge.getString(PREF_KEY, "");
-        if (TextUtils.isEmpty(mInstallSourcePackageName)
-            || TextUtils.isEmpty(mInstallSourcePackageName.trim())) {
-            XposedLog.d(TAG, getPackageName(), "Install source is empty, keep system value");
-            return;
-        }
-        mInstallSourcePackageName = mInstallSourcePackageName.trim();
+        String packageName = PrefsBridge.getString(PREF_KEY, "").trim();
+        if (packageName.isEmpty()) return;
 
-        Class<?> installStart = findClassIfExists(INSTALL_START, getClassLoader());
-        if (installStart == null) {
-            XposedLog.e(TAG, getPackageName(), "Class not found: " + INSTALL_START);
+        Class<?> row = findClassIfExists(APP_INFO + "g", getClassLoader());
+        Class<?> holder = findClassIfExists(APP_INFO + "AppInfoViewObject$ViewHolder", getClassLoader());
+        Method bind = row == null || holder == null ? null : findMethodExactIfExists(row, "I", holder);
+        if (bind == null || bind.getDeclaringClass() != row
+            || findMethodExactIfExists(holder, "getTvInstallSource") == null) {
+            XposedLog.w(TAG, getPackageName(), "Install source display is unsupported on this installer");
             return;
         }
 
-        // 只 hook 安装器自己的安装入口，不再全局替换 Activity.getLaunchedFromPackage。
-        // 1. 部分版本 InstallStart 自己声明了 getCallingPackage
-        Method getCallingPackage = findMethodExactIfExists(installStart, "getCallingPackage");
-        if (getCallingPackage != null && getCallingPackage.getDeclaringClass() == installStart) {
-            hookMethod(getCallingPackage, returnConstant(mInstallSourcePackageName));
-        }
+        // HyperOS checks the real calling package and UID again on the progress page.
+        hookMethod(bind, new IMethodHook() {
+            @Override
+            public void after(HookParam param) {
+                if (param.getHasThrowable()) return;
+                Object viewHolder = param.arg(0);
+                if (viewHolder == null) return;
+                if (!(callMethod(viewHolder, "getTvInstallSource") instanceof TextView source)) return;
+                if (source.getVisibility() != View.VISIBLE || source.getText().length() == 0) return;
+                Context context = source.getContext();
+                int format = context.getResources().getIdentifier("dialog_install_source", "string",
+                    "com.miui.packageinstaller");
+                if (format == 0) return;
 
-        // 2. 当前版本 InstallStart.onCreate 通过 y2.d$a#b(Activity) 解析调用方
-        Class<?> callingPackageHelper = findClassIfExists(CALLING_PACKAGE_HELPER, getClassLoader());
-        if (callingPackageHelper != null) {
-            findAndHookMethod(callingPackageHelper, "b", Activity.class,
-                returnConstant(mInstallSourcePackageName));
-        } else {
-            XposedLog.w(TAG, getPackageName(), "Class not found: " + CALLING_PACKAGE_HELPER);
-        }
-
-        // 3. 低版本走 com.miui.packageInstaller.L#a(InstallStart)
-        Class<?> legacyHelper = findClassIfExists(LEGACY_CALLING_PACKAGE_HELPER, getClassLoader());
-        if (legacyHelper != null) {
-            findAndHookMethod(legacyHelper, "a", installStart,
-                returnConstant(mInstallSourcePackageName));
-        }
+                PackageManager pm = context.getPackageManager();
+                CharSequence label;
+                try {
+                    label = pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0));
+                } catch (PackageManager.NameNotFoundException ignored) {
+                    return;
+                }
+                String previous = source.getText().toString();
+                String replacement = context.getString(format, label);
+                source.setText(replacement);
+                if (getObjectField(viewHolder, "itemView") instanceof View item
+                    && item.getContentDescription() != null) {
+                    String description = item.getContentDescription().toString();
+                    if (description.endsWith(previous)) {
+                        item.setContentDescription(
+                            description.substring(0, description.length() - previous.length()) + replacement);
+                    }
+                }
+            }
+        });
     }
 }

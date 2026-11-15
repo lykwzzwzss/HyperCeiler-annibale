@@ -51,7 +51,6 @@ public class DisableAds extends BaseHook {
             "showRecommend",
             "showTopBanner",
             "showTopVideo",
-            "equals",
             "getShowOpenScreenAd",
             "hasGoldLabel",
             "isBottomButtonLayoutType",

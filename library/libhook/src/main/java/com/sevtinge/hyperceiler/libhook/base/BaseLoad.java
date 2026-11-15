@@ -315,9 +315,6 @@ public abstract class BaseLoad {
         try {
             if (!condition.getAsBoolean()) return;
             hook = hookFactory.get();
-            if (!mPendingDexKitHooks.isEmpty()) {
-                flushPendingDexKitHooks();
-            }
             initHookInternal(hook, true);
         } catch (Throwable t) {
             logHookFailure(hook, t);

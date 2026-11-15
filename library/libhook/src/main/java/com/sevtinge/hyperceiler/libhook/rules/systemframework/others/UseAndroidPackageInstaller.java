@@ -22,14 +22,10 @@ import static com.sevtinge.hyperceiler.libhook.base.BaseHook.deoptimize;
 
 import com.sevtinge.hyperceiler.common.log.XposedLog;
 import com.sevtinge.hyperceiler.libhook.base.BaseHook;
-import io.github.lingqiqi5211.ezhooktool.xposed.java.IMethodHook;
-
 import java.lang.reflect.Method;
 
-import io.github.lingqiqi5211.ezhooktool.xposed.common.HookParam;
-
 public class UseAndroidPackageInstaller extends BaseHook {
-    static boolean fakeCts = false;
+    private final ThreadLocal<Boolean> installerCall = new ThreadLocal<>();
 
     @Override
     public void init() {
@@ -39,28 +35,23 @@ public class UseAndroidPackageInstaller extends BaseHook {
             return;
         }
 
-        findAndHookMethod(PackageManagerServiceImpl, "isCTS", new IMethodHook() {
-            @Override
-            public void before(HookParam param) {
-                // logD(TAG, packageName,"fakeCTS:"+ fakeCts);
-                param.setResult(fakeCts);
-            }
-        });
+        Method isCts = findMethodExactIfExists(PackageManagerServiceImpl, "isCTS");
+        if (isCts == null || isCts.getReturnType() != boolean.class) return;
+        if (chain(isCts, call -> Boolean.TRUE.equals(installerCall.get()) ? true : call.proceed()) == null) {
+            return;
+        }
 
         Method[] methods = PackageManagerServiceImpl.getDeclaredMethods();
         for (Method method : methods) {
             String name = method.getName();
             if ("hookChooseBestActivity".equals(name) || "updateDefaultPkgInstallerLocked".equals(name) || "assertValidApkAndInstaller".equals(name)) {
-                // logD(TAG, packageName,"hook " + name);
-                hookMethod(method, new IMethodHook() {
-                    @Override
-                    public void before(HookParam param) {
-                        fakeCts = true;
-                    }
-
-                    @Override
-                    public void after(HookParam param) {
-                        fakeCts = false;
+                chain(method, call -> {
+                    boolean nested = Boolean.TRUE.equals(installerCall.get());
+                    installerCall.set(true);
+                    try {
+                        return call.proceed();
+                    } finally {
+                        if (!nested) installerCall.remove();
                     }
                 });
 

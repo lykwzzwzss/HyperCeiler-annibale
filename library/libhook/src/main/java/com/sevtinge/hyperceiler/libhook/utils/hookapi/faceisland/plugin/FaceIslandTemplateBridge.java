@@ -119,9 +119,15 @@ public final class FaceIslandTemplateBridge {
         return handled;
     }
 
-    public static Object scaleDebugIslandRect(Object value) {
+    public static Object scaleDebugIslandRect(Object content, Object value) {
         int scaledWidth;
         if (!(value instanceof Rect) || !FaceIslandPrefs.isDebugPreviewActive()) {
+            return value;
+        }
+        try {
+            Object data = invoke(content, "getCurrentIslandData");
+            if (!isManaged(data) || !DEBUG_KEY.equals(islandKey(data))) return value;
+        } catch (Exception unavailable) {
             return value;
         }
         Rect source = (Rect) value;

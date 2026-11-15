@@ -12,8 +12,11 @@ import static com.sevtinge.hyperceiler.libhook.utils.api.DeviceHelper.System.isV
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.BadParcelableException;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Parcelable;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -62,6 +65,8 @@ public class HomePageActivity extends AppCompatActivity
     PreferenceFragment.OnPreferenceStartFragmentCallback {
 
     private static final String STATE_CURRENT_PAGE = "home_current_page";
+    private static final String STATE_WINDOW_HIERARCHY = "android:viewHierarchyState";
+    private static final String STATE_WINDOW_VIEWS = "android:views";
 
     public ViewPager mViewPager;
     public HomeContentAdapter mContentAdapter;
@@ -206,6 +211,22 @@ public class HomePageActivity extends AppCompatActivity
             outState.putInt(STATE_CURRENT_PAGE, mViewPager.getCurrentItem());
         }
         super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        Bundle hierarchy = savedInstanceState.getBundle(STATE_WINDOW_HIERARCHY);
+        if (hierarchy != null) {
+            try {
+                // Older builds saved Miuix's pager parcel in this array. Reading it can overrun
+                // its declared size. The selected page is restored separately in onCreate.
+                hierarchy.getSparseParcelableArray(STATE_WINDOW_VIEWS, Parcelable.class);
+            } catch (BadParcelableException error) {
+                hierarchy.remove(STATE_WINDOW_VIEWS);
+                Log.w("HomePageActivity", "Discarding unreadable saved view state", error);
+            }
+        }
+        super.onRestoreInstanceState(savedInstanceState);
     }
 
     @Override

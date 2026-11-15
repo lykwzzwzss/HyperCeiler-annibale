@@ -408,19 +408,24 @@ public class SunlightModeTile extends TileUtils {
      */
     private void enableSunlightMode(TileContext ctx, Context context, int currentBrightness, int targetBrightness) {
         mLastBrightness = currentBrightness;
-        handleAutoBrightnessOnEnable(context);
-
-        int applied = writeBrightness(targetBrightness);
+        int applied;
+        try {
+            registerBroadcastReceiver(ctx, context);
+            handleAutoBrightnessOnEnable(context);
+            applied = writeBrightness(targetBrightness);
+        } catch (RuntimeException error) {
+            cancelBrightnessEnable(ctx, context);
+            throw error;
+        }
         if (applied == WRITE_REJECTED) {
             // 节点完全不接受写入（典型是被当成控制节点的 brightness_clone），退回系统设置方案
             XposedLog.w(TAG, "Custom brightness rejected by node, falling back to system brightness");
-            handleAutoBrightnessOnDisable(context);
+            cancelBrightnessEnable(ctx, context);
             mUseSystemApi = true;
             toggleSystemApiBrightness(ctx, context);
             return;
         }
 
-        registerBroadcastReceiver(ctx, context);
         // 记录实际生效值：万一被框架截断，状态判断也不会一直显示未开启
         mTargetBrightness = applied;
         mIsSunlightActive = true;
@@ -444,24 +449,34 @@ public class SunlightModeTile extends TileUtils {
      * 切换系统 API 最高亮度模式
      */
     private void toggleSystemApiBrightness(TileContext ctx, Context context) {
+        if (mIsSunlightActive) {
+            disableSunlightMode(ctx, context);
+            return;
+        }
         try {
-            if (!mIsSunlightActive) {
-                // 开启
-                handleAutoBrightnessOnEnable(context);
-
-                mLastBrightness = Settings.System.getInt(context.getContentResolver(), SETTING_SCREEN_BRIGHTNESS);
-                mTargetBrightness = 255;
-                Settings.System.putInt(context.getContentResolver(), SETTING_SCREEN_BRIGHTNESS, mTargetBrightness);
-                mIsSunlightActive = true;
-            } else {
-                // 关闭
-                Settings.System.putInt(context.getContentResolver(), SETTING_SCREEN_BRIGHTNESS, mLastBrightness);
-                handleAutoBrightnessOnDisable(context);
-
-                resetState();
+            mLastBrightness = Settings.System.getInt(context.getContentResolver(), SETTING_SCREEN_BRIGHTNESS);
+            registerBroadcastReceiver(ctx, context);
+            handleAutoBrightnessOnEnable(context);
+            if (!Settings.System.putInt(context.getContentResolver(), SETTING_SCREEN_BRIGHTNESS, 255)) {
+                throw new IllegalStateException("Unable to set screen brightness");
             }
+            mTargetBrightness = 255;
+            mIsSunlightActive = true;
         } catch (Settings.SettingNotFoundException e) {
+            cancelBrightnessEnable(ctx, context);
             XposedLog.e(TAG, "Brightness setting not found", e);
+        } catch (RuntimeException error) {
+            cancelBrightnessEnable(ctx, context);
+            throw error;
+        }
+    }
+
+    private void cancelBrightnessEnable(TileContext ctx, Context context) {
+        try {
+            unregisterBroadcastReceiver(ctx, context);
+        } finally {
+            try { handleAutoBrightnessOnDisable(context); }
+            finally { resetState(); }
         }
     }
 
@@ -658,8 +673,11 @@ public class SunlightModeTile extends TileUtils {
 
     private void restoreBrightness(Context context) {
         try {
-            if (!mUseSystemApi && mBrightnessPath != null) writeBrightness(mLastBrightness);
-            else Settings.System.putInt(context.getContentResolver(), SETTING_SCREEN_BRIGHTNESS, mLastBrightness);
+            if (!mUseSystemApi && mMode != Mode.SYSTEM_API_MAX_BRIGHTNESS && mBrightnessPath != null) {
+                writeBrightness(mLastBrightness);
+            } else {
+                Settings.System.putInt(context.getContentResolver(), SETTING_SCREEN_BRIGHTNESS, mLastBrightness);
+            }
         } catch (Exception error) {
             XposedLog.w(TAG, "Node restore failed; restoring system brightness", error);
             Settings.System.putInt(context.getContentResolver(), SETTING_SCREEN_BRIGHTNESS, mLastBrightness);
